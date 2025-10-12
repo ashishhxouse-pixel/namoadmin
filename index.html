@@ -567,7 +567,7 @@ function renderQrGenerator(container) {
     $('#generate-qr-btn').addEventListener('click', () => {
         const tableNumber = $('#table-number-input').value;
         if (!tableNumber) { showToast('Please enter a table number.'); return; }
-        const url = `https://hxousee.netlify.app/?table=${tableNumber}`;
+        const url = `https://hxouseco.netlify.app/?table=${tableNumber}`;
         const qrcodeContainer = $('#qrcode');
         qrcodeContainer.innerHTML = '';
         const qr = qrcode(0, 'L'); qr.addData(url); qr.make();
@@ -678,3 +678,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 </script>
 </body>
 </html>
+
