@@ -7,12 +7,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
     <style>
         :root {
-            --background-light: #f4f4f5; --foreground-light: #18181b; --card-light: #ffffff; --card-foreground-light: #18181b; --popover-light: #ffffff; --popover-foreground-light: #18181b; --primary-light: #18181b; --primary-foreground-light: #fafafa; --secondary-light: #f4f4f5; --secondary-foreground-light: #18181b; --muted-light: #f4f4f5; --muted-foreground-light: #71717a; --accent-light: #f4f4f5; --accent-foreground-light: #18181b; --destructive-light: #ef4444; --destructive-foreground-light: #fafafa; --border-light: #e4e4e7; --input-light: #e4e4e7; --ring-light: #18181b;
-            --background-dark: #09090b; --foreground-dark: #fafafa; --card-dark: #18181b; --card-foreground-dark: #fafafa; --popover-dark: #09090b; --popover-foreground-dark: #fafafa; --primary-dark: #fafafa; --primary-foreground-dark: #09090b; --secondary-dark: #27272a; --secondary-foreground-dark: #fafafa; --muted-dark: #27272a; --muted-foreground-dark: #a1a1aa; --accent-dark: #27272a; --accent-foreground-dark: #fafafa; --destructive-dark: #7f1d1d; --destructive-foreground-dark: #fafafa; --border-dark: #27272a; --input-dark: #27272a; --ring-dark: #fafafa;
+            --background-light: #f9fafb; --foreground-light: #111827; --card-light: #ffffff; --card-foreground-light: #111827; --popover-light: #ffffff; --popover-foreground-light: #111827; --primary-light: #111827; --primary-foreground-light: #f9fafb; --secondary-light: #f3f4f6; --secondary-foreground-light: #111827; --muted-light: #f3f4f6; --muted-foreground-light: #6b7280; --accent-light: #f3f4f6; --accent-foreground-light: #111827; --destructive-light: #ef4444; --destructive-foreground-light: #f9fafb; --border-light: #e5e7eb; --input-light: #e5e7eb; --ring-light: #111827;
+            --background-dark: #09090b; --foreground-dark: #fafafa; --card-dark: #09090b; --card-foreground-dark: #fafafa; --popover-dark: #09090b; --popover-foreground-dark: #fafafa; --primary-dark: #fafafa; --primary-foreground-dark: #09090b; --secondary-dark: #18181b; --secondary-foreground-dark: #fafafa; --muted-dark: #18181b; --muted-foreground-dark: #a1a1aa; --accent-dark: #18181b; --accent-foreground-dark: #fafafa; --destructive-dark: #7f1d1d; --destructive-foreground-dark: #fafafa; --border-dark: #27272a; --input-dark: #27272a; --ring-dark: #fafafa;
         }
         .light {
             --background: var(--background-light); --foreground: var(--foreground-light); --card: var(--card-light); --card-foreground: var(--card-foreground-light); --popover: var(--popover-light); --popover-foreground: var(--popover-foreground-light); --primary: var(--primary-light); --primary-foreground: var(--primary-foreground-light); --secondary: var(--secondary-light); --secondary-foreground: var(--secondary-foreground-light); --muted: var(--muted-light); --muted-foreground: var(--muted-foreground-light); --accent: var(--accent-light); --accent-foreground: var(--accent-foreground-light); --destructive: var(--destructive-light); --destructive-foreground: var(--destructive-foreground-light); --border: var(--border-light); --input: var(--input-light); --ring: var(--ring-light);
@@ -20,9 +19,7 @@
         .dark {
             --background: var(--background-dark); --foreground: var(--foreground-dark); --card: var(--card-dark); --card-foreground: var(--card-foreground-dark); --popover: var(--popover-dark); --popover-foreground: var(--popover-foreground-dark); --primary: var(--primary-dark); --primary-foreground: var(--primary-foreground-dark); --secondary: var(--secondary-dark); --secondary-foreground: var(--secondary-foreground-dark); --muted: var(--muted-dark); --muted-foreground: var(--muted-foreground-dark); --accent: var(--accent-dark); --accent-foreground: var(--accent-foreground-dark); --destructive: var(--destructive-dark); --destructive-foreground: var(--destructive-foreground-dark); --border: var(--border-dark); --input: var(--input-dark); --ring: var(--ring-dark);
         }
-        body { background-color: var(--background); color: var(--foreground); font-family: 'Inter', sans-serif; }
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
+        body { background-color: var(--background); color: var(--foreground); }
         .bg-card { background-color: var(--card); }
         .text-card-foreground { color: var(--card-foreground); }
         .border-border { border-color: var(--border); }
@@ -35,56 +32,54 @@
         .text-destructive-foreground { color: var(--destructive-foreground); }
         .ring-ring { box-shadow: 0 0 0 2px var(--ring); }
         .fade-in { animation: fadeIn 0.5s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-out { animation: fadeOut 0.3s ease-in-out forwards; }
+        .fade-out { animation: fadeOut 0.5s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
         @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); height: 0; padding: 0; margin: 0; border: 0; } }
         
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+        ::-webkit-scrollbar-track { background: var(--secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--muted-foreground); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
     </style>
 </head>
 <body class="antialiased">
     <!-- Login Screen -->
-    <div id="login-screen" class="fixed inset-0 bg-background flex items-center justify-center z-[100]">
-        <div class="w-full max-w-sm bg-card p-8 rounded-xl shadow-lg border border-border">
+    <div id="login-screen" class="fixed inset-0 bg-secondary flex items-center justify-center z-[100]">
+        <div class="w-full max-w-sm bg-card p-8 rounded-lg shadow-md">
             <h2 class="text-2xl font-bold text-center text-card-foreground mb-2">HXOUSE Admin</h2>
-            <p class="text-center text-muted-foreground mb-6">Welcome back. Please sign in.</p>
+            <p class="text-center text-muted-foreground mb-6">Please sign in to continue</p>
             <form id="login-form">
                 <div class="space-y-4">
                     <div>
-                        <label for="email" class="text-sm font-medium text-muted-foreground">Email</label>
-                        <input type="email" id="email" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border focus:ring-2 focus:ring-ring outline-none" required>
+                        <label for="email" class="text-sm font-medium">Email</label>
+                        <input type="email" id="email" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border" required>
                     </div>
                     <div>
-                        <label for="password" class="text-sm font-medium text-muted-foreground">Password</label>
-                        <input type="password" id="password" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border focus:ring-2 focus:ring-ring outline-none" required>
+                        <label for="password" class="text-sm font-medium">Password</label>
+                        <input type="password" id="password" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border" required>
                     </div>
                 </div>
                 <p id="login-error" class="text-destructive text-sm text-center mt-4 h-5"></p>
-                <button type="submit" class="w-full bg-primary text-primary-foreground font-semibold py-2 px-4 rounded-lg mt-4 hover:bg-opacity-90 transition-colors">Sign In</button>
+                <button type="submit" class="w-full bg-primary text-primary-foreground font-semibold py-2 px-4 rounded-lg mt-4">Sign In</button>
             </form>
         </div>
     </div>
 
     <!-- Main App Container -->
     <div id="app-container" class="hidden">
-        <div class="flex h-screen bg-background">
+        <div class="flex h-screen bg-secondary">
             <!-- Sidebar -->
             <aside class="w-64 flex-shrink-0 bg-card border-r border-border flex flex-col">
                 <div class="h-16 flex items-center justify-center border-b border-border">
                     <h1 class="text-2xl font-bold text-card-foreground">H<span class="text-red-500">X</span>OUSE</h1>
                 </div>
-                <nav id="sidebar-nav" class="flex-grow p-4 space-y-1">
-                    <!-- Nav items will be injected by JS -->
-                </nav>
+                <nav id="sidebar-nav" class="flex-grow p-4 space-y-2"></nav>
                 <div class="p-4 border-t border-border space-y-2">
-                     <button id="theme-toggle" class="w-full flex items-center justify-center p-2 rounded-lg bg-secondary text-muted-foreground hover:text-card-foreground transition-colors">
+                    <button id="theme-toggle" class="w-full flex items-center justify-center p-2 rounded-lg bg-secondary text-secondary-foreground">
                         <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                         <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                     </button>
-                    <button id="logout-btn" class="w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg text-muted-foreground hover:bg-secondary hover:text-card-foreground transition-colors">
+                    <button id="logout-btn" class="w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg text-muted-foreground hover:bg-secondary">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                         Logout
                     </button>
@@ -93,28 +88,33 @@
 
             <!-- Main Content -->
             <main class="flex-1 flex flex-col overflow-hidden">
-                <header class="h-16 bg-card border-b border-border flex items-center justify-between px-6 flex-shrink-0">
+                <header class="h-16 bg-card border-b border-border flex items-center justify-between px-6">
                     <h2 id="page-title" class="text-xl font-semibold text-card-foreground">Dashboard</h2>
                     <div id="user-email" class="text-sm text-muted-foreground"></div>
                 </header>
-                <div id="page-content" class="flex-1 overflow-y-auto p-6 space-y-6">
-                    <!-- Content will be injected by JS -->
-                </div>
+                <div id="page-content" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
             </main>
         </div>
     </div>
     
+    <!-- Toast Notification -->
     <div id="toast" class="hidden fixed bottom-5 right-5 bg-primary text-primary-foreground py-2 px-4 rounded-lg shadow-lg text-sm">
         <p id="toast-message"></p>
     </div>
+
+    <!-- New Order Alert Modal -->
     <div id="order-alert" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"></div>
+    
+    <!-- Embedded Audio -->
     <audio id="notification-sound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA" preload="none"></audio>
+
 
 <script>
 // =================================================================================
 //  SECTION 1: SETUP & CONFIGURATION
 // =================================================================================
 const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => document.querySelectorAll(selector);
 
 const SUPABASE_URL = 'https://sjcfnyouuihgzugkhqeu.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY2ZueW91dWloZ3p1Z2tocWV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMjA3NzIsImV4cCI6MjA3NTc5Njc3Mn0.pTUyo1y8IiGxygMzpUVavY6Z1_6h1z_jKTp5U1r1aDc';
@@ -122,13 +122,12 @@ const supabase = self.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 const state = {
     currentPage: 'dashboard',
-    salesChart: null,
+    chartInstance: null,
     audioInitialized: false,
-    dashboardDateRange: '30d', // '7d', '30d', '90d'
+    analyticsDateRange: 30, // 7, 30, 90
     user: null,
     customersCache: {},
     tablesCache: {},
-    productsCache: {},
 };
 
 const ICONS = {
@@ -154,7 +153,6 @@ const PAGES = {
 // =================================================================================
 //  SECTION 2: CORE LOGIC & NAVIGATION
 // =================================================================================
-
 function navigateTo(page) {
     state.currentPage = page;
     render();
@@ -166,17 +164,14 @@ function render() {
         const page = PAGES[key];
         const isActive = state.currentPage === key;
         return `
-            <button onclick="navigateTo('${key}')" class="w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary hover:text-card-foreground'}">
-                ${page.icon}
-                ${page.title}
-            </button>
-        `;
+            <button onclick="navigateTo('${key}')" class="w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg ${isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary'}">
+                ${page.icon} ${page.title}
+            </button>`;
     }).join('');
 
     const pageContent = $('#page-content');
-    const pageTitle = $('#page-title');
-    pageContent.innerHTML = '<div class="text-center text-muted-foreground">Loading...</div>';
-    pageTitle.textContent = PAGES[state.currentPage].title;
+    $('#page-title').textContent = PAGES[state.currentPage].title;
+    pageContent.innerHTML = `<div class="text-center text-muted-foreground">Loading...</div>`;
     
     pageContent.classList.remove('fade-in');
     void pageContent.offsetWidth; 
@@ -198,10 +193,8 @@ function initializeAudio() {
     audio.play().then(() => {
         audio.pause();
         state.audioInitialized = true;
-        showToast('Audio enabled!');
-        if (state.currentPage === 'dashboard') {
-            PAGES.dashboard.render($('#page-content'));
-        }
+        showToast('Sound notifications enabled!');
+        if (state.currentPage === 'dashboard') renderDashboard($('#page-content'));
     }).catch(error => console.warn("Audio playback failed to initialize:", error));
 }
 
@@ -221,7 +214,6 @@ function stopOrderAlarm() {
 // =================================================================================
 //  SECTION 3: PAGE RENDERERS
 // =================================================================================
-
 async function renderDashboard(container) {
     const audioInitHTML = !state.audioInitialized
         ? `<div id="audio-prompt" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6" role="alert">
@@ -229,29 +221,20 @@ async function renderDashboard(container) {
                 <div class="py-1"><svg class="fill-current h-6 w-6 text-yellow-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zM9 11v4h2v-4H9zm0-4h2v2H9V7z"/></svg></div>
                 <div>
                   <p class="font-bold">Enable Sound Notifications</p>
-                  <p class="text-sm">Click the "Test Audio" button to enable and test sound for new orders.</p>
+                  <p class="text-sm">Click the "Test Audio" button to enable sound for new orders.</p>
                   <button id="test-audio-btn" class="mt-2 bg-yellow-500 text-white font-bold py-1 px-2 rounded text-xs">Test Audio</button>
                 </div>
             </div>
-           </div>`
-        : '';
-        
+           </div>` : '';
     container.innerHTML = `
         ${audioInitHTML}
-        <div class="mb-4">
-            <h3 class="text-lg font-semibold">At a Glance (Last 30 Days)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="dashboard-stats">
+            <div class="bg-card p-6 rounded-lg shadow-sm flex items-center justify-center text-muted-foreground">Loading stats...</div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div id="card-orders" class="bg-card p-6 rounded-xl border border-border"></div>
-            <div id="card-revenue" class="bg-card p-6 rounded-xl border border-border"></div>
-            <div id="card-customers" class="bg-card p-6 rounded-xl border border-border"></div>
-        </div>
-        
         <div class="mt-8">
             <h3 class="text-lg font-semibold mb-4">New Live Orders</h3>
             <div id="live-orders-container" class="space-y-4"></div>
-        </div>
-    `;
+        </div>`;
 
     if ($('#test-audio-btn')) {
         $('#test-audio-btn').addEventListener('click', () => {
@@ -266,10 +249,9 @@ async function renderDashboard(container) {
     container.addEventListener('click', async (e) => {
         const button = e.target.closest('.acknowledge-order-btn');
         if (button) {
-            const orderId = button.dataset.id;
             button.disabled = true;
             button.textContent = '...';
-            const { error } = await supabase.from('orders').update({ status: 'preparing' }).eq('id', orderId);
+            const { error } = await supabase.from('orders').update({ status: 'preparing' }).eq('id', button.dataset.id);
             if (error) {
                 showToast(`Error: ${error.message}`);
                 button.disabled = false;
@@ -285,28 +267,24 @@ async function renderDashboard(container) {
 }
 
 function createOrderCardHTML(order) {
-    const customerName = order.customers?.name || 'N/A';
-    const tableNumber = order.tables?.table_number || 'N/A';
-    const specialInstructions = order.special_instructions ? `<p class="text-sm mt-2 text-red-600 font-semibold">Instructions: ${order.special_instructions}</p>` : '';
     const itemsHTML = order.order_items.map(item => `
         <div class="flex justify-between text-sm py-1">
-            <span>${item.quantity} x ${item.products?.name || '[Deleted Product]'}</span>
+            <span>${item.quantity} x ${item.products?.name || '[? Product]'}</span>
             <span>₹${(item.price_at_time_of_order * item.quantity).toFixed(2)}</span>
-        </div>
-    `).join('');
+        </div>`).join('');
 
     return `
-        <div id="order-card-${order.id}" class="bg-card p-4 rounded-lg border border-border fade-in">
+        <div id="order-card-${order.id}" class="bg-card p-4 rounded-lg shadow-sm border-l-4 border-blue-500 fade-in">
             <div class="flex justify-between items-start">
                 <div>
                     <p class="font-bold">Order #${order.id.slice(0, 6)}</p>
-                    <p class="text-sm text-muted-foreground">For ${customerName} at Table #${tableNumber}</p>
+                    <p class="text-sm text-muted-foreground">For ${order.customers?.name || 'N/A'} at Table #${order.tables?.table_number || 'N/A'}</p>
                     <p class="text-xs text-muted-foreground mt-1">Received at ${new Date(order.created_at).toLocaleTimeString()}</p>
                 </div>
                 <button data-id="${order.id}" class="acknowledge-order-btn bg-blue-500 text-white px-3 py-1 text-xs font-bold rounded-full flex-shrink-0">Acknowledge</button>
             </div>
             <div class="mt-3 border-t border-border pt-2">${itemsHTML}</div>
-            ${specialInstructions}
+            ${order.special_instructions ? `<p class="text-sm mt-2 text-red-600 font-semibold">Instructions: ${order.special_instructions}</p>` : ''}
         </div>`;
 }
 
@@ -319,138 +297,124 @@ async function loadLiveOrders() {
 }
 
 async function loadDashboardStats() {
-    const { data: allOrders, error: ordersError } = await supabase.from('orders').select('total_amount, created_at').in('status', ['preparing', 'delivered']);
-    if (ordersError) { showToast('Error fetching order data.'); console.error(ordersError); return; }
-    const customersCount = Object.keys(state.customersCache).length;
-    const now = new Date();
-    const startDate = new Date();
-    startDate.setDate(now.getDate() - 30);
-    const filteredOrders = allOrders.filter(order => new Date(order.created_at) >= startDate);
-    if ($('#card-orders')) $('#card-orders').innerHTML = createStatCard('Total Orders', filteredOrders.length, '📝');
-    const totalRevenue = filteredOrders.reduce((acc, order) => acc + order.total_amount, 0);
-    if ($('#card-revenue')) $('#card-revenue').innerHTML = createStatCard('Total Revenue', `₹${totalRevenue.toFixed(2)}`, '💰');
-    if ($('#card-customers')) $('#card-customers').innerHTML = createStatCard('Total Customers', customersCount, '👥');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const { data: orders, error } = await supabase.from('orders').select('total_amount').gte('created_at', today.toISOString());
+    const { count: customersCount, error: custError } = await supabase.from('customers').select('*', { count: 'exact', head: true });
+
+    if (state.currentPage !== 'dashboard') return;
+    
+    const container = $('#dashboard-stats');
+    if (error || custError) { container.innerHTML = `<div class="bg-card p-6 rounded-lg shadow-sm text-destructive">Failed to load stats.</div>`; return; }
+    
+    const totalRevenue = orders?.reduce((acc, order) => acc + order.total_amount, 0) || 0;
+    container.innerHTML = `
+        ${createStatCard('Todays Revenue', `₹${totalRevenue.toFixed(2)}`, '💰')}
+        ${createStatCard('Todays Orders', orders?.length || 0, '📝')}
+        ${createStatCard('Total Customers', customersCount || 0, '👥')}`;
 }
 
 function createStatCard(title, value, icon) {
     return `
-        <h3 class="text-sm font-medium text-muted-foreground">${title}</h3>
-        <div class="mt-2 flex items-center justify-between">
-            <p class="text-3xl font-bold">${value}</p>
-            <span class="text-3xl">${icon}</span>
+        <div class="bg-card p-6 rounded-lg shadow-sm">
+            <h3 class="text-sm font-medium text-muted-foreground">${title}</h3>
+            <div class="mt-2 flex items-center justify-between">
+                <p class="text-3xl font-bold">${value}</p>
+                <span class="text-3xl">${icon}</span>
+            </div>
         </div>`;
 }
 
-// --- ANALYTICS ---
 async function renderAnalytics(container) {
-    const getActiveClass = (range) => state.dashboardDateRange === range ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground';
+    const getActiveClass = (range) => state.analyticsDateRange === range ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground';
+
     container.innerHTML = `
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-semibold">Sales Overview</h3>
-            <div class="flex justify-end space-x-2">
-                <button class="date-range-btn px-3 py-1 rounded-md text-sm font-medium ${getActiveClass('7d')}" data-range="7d">7 Days</button>
-                <button class="date-range-btn px-3 py-1 rounded-md text-sm font-medium ${getActiveClass('30d')}" data-range="30d">30 Days</button>
-                <button class="date-range-btn px-3 py-1 rounded-md text-sm font-medium ${getActiveClass('90d')}" data-range="90d">90 Days</button>
-            </div>
+        <div class="flex justify-end space-x-2 mb-4">
+            <button class="date-range-btn px-3 py-1 rounded-md text-sm font-medium ${getActiveClass(7)}" data-range="7">7 Days</button>
+            <button class="date-range-btn px-3 py-1 rounded-md text-sm font-medium ${getActiveClass(30)}" data-range="30">30 Days</button>
+            <button class="date-range-btn px-3 py-1 rounded-md text-sm font-medium ${getActiveClass(90)}" data-range="90">90 Days</button>
         </div>
-        <div class="bg-card p-6 rounded-xl border border-border h-[500px]">
+        <div class="bg-card p-6 rounded-lg shadow-sm">
             <canvas id="salesChart"></canvas>
         </div>`;
 
     container.querySelectorAll('.date-range-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            state.dashboardDateRange = e.target.dataset.range;
+            state.analyticsDateRange = parseInt(e.target.dataset.range, 10);
             renderAnalytics(container);
         });
     });
-    await loadAnalyticsData();
+
+    const { labels, revenueData, ordersData } = await loadAnalyticsData(state.analyticsDateRange);
+    createSalesChart(labels, revenueData, ordersData);
 }
 
-async function loadAnalyticsData() {
-    const { data: allOrders, error } = await supabase.from('orders').select('total_amount, created_at').in('status', ['preparing', 'delivered']);
-    if (error) { showToast('Error fetching analytics data.'); return; }
-    
-    const now = new Date();
+async function loadAnalyticsData(days) {
     const startDate = new Date();
-    let days;
-    switch (state.dashboardDateRange) {
-        case '7d': days = 7; break;
-        case '90d': days = 90; break;
-        default: days = 30; break;
-    }
-    startDate.setDate(now.getDate() - days);
+    startDate.setDate(startDate.getDate() - days);
+    
+    const { data, error } = await supabase.from('orders').select('created_at, total_amount').gte('created_at', startDate.toISOString()).order('created_at');
 
-    const filteredOrders = allOrders.filter(order => new Date(order.created_at) >= startDate);
+    if (error) { showToast('Error loading chart data'); return { labels: [], revenueData: [], ordersData: [] }; }
 
-    const dailyData = {};
+    const dailyData = data.reduce((acc, order) => {
+        const date = new Date(order.created_at).toISOString().split('T')[0];
+        if (!acc[date]) acc[date] = { revenue: 0, orders: 0 };
+        acc[date].revenue += order.total_amount;
+        acc[date].orders += 1;
+        return acc;
+    }, {});
+
+    const labels = [];
+    const revenueData = [];
+    const ordersData = [];
     for (let i = 0; i < days; i++) {
         const d = new Date(startDate);
-        d.setDate(startDate.getDate() + i);
-        const key = d.toISOString().split('T')[0];
-        dailyData[key] = { revenue: 0, orders: 0 };
+        d.setDate(d.getDate() + i);
+        const dateString = d.toISOString().split('T')[0];
+        labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        revenueData.push(dailyData[dateString]?.revenue || 0);
+        ordersData.push(dailyData[dateString]?.orders || 0);
     }
-
-    filteredOrders.forEach(order => {
-        const key = new Date(order.created_at).toISOString().split('T')[0];
-        if (dailyData[key]) {
-            dailyData[key].revenue += order.total_amount;
-            dailyData[key].orders += 1;
-        }
-    });
-
-    const chartLabels = Object.keys(dailyData);
-    const chartRevenueData = chartLabels.map(label => dailyData[label].revenue);
-    const chartOrdersData = chartLabels.map(label => dailyData[label].orders);
-    
-    renderSalesChart(chartLabels, chartRevenueData, chartOrdersData);
+    return { labels, revenueData, ordersData };
 }
 
-function renderSalesChart(labels, revenueData, ordersData) {
-    const ctx = $('#salesChart')?.getContext('2d');
-    if (!ctx) return;
-    if (state.salesChart) state.salesChart.destroy();
+function createSalesChart(labels, revenueData, ordersData) {
+    if (state.chartInstance) state.chartInstance.destroy();
     
-    const isDark = document.documentElement.classList.contains('dark');
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-    const textColor = isDark ? '#fafafa' : '#18181b';
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    const isDarkMode = document.documentElement.classList.contains('dark');
+    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    const textColor = isDarkMode ? '#fafafa' : '#111827';
 
-    state.salesChart = new Chart(ctx, {
+    state.chartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
-            datasets: [{
-                label: 'Revenue (₹)', data: revenueData,
-                backgroundColor: 'rgba(59, 130, 246, 0.5)', borderColor: 'rgba(59, 130, 246, 1)',
-                borderWidth: 1, yAxisID: 'yRevenue',
-            }, {
-                label: 'Orders', data: ordersData,
-                backgroundColor: 'rgba(239, 68, 68, 0.5)', borderColor: 'rgba(239, 68, 68, 1)',
-                borderWidth: 1, type: 'line', yAxisID: 'yOrders', tension: 0.3,
-            }]
+            datasets: [
+                { type: 'line', label: 'Revenue (₹)', data: revenueData, borderColor: '#34d399', backgroundColor: '#34d399', yAxisID: 'y', tension: 0.1 },
+                { type: 'bar', label: 'Orders', data: ordersData, backgroundColor: '#60a5fa', yAxisID: 'y1' }
+            ]
         },
         options: {
             responsive: true, maintainAspectRatio: false,
             scales: {
-                x: { type: 'time', time: { unit: 'day' }, ticks: { color: textColor }, grid: { color: gridColor } },
-                yRevenue: { type: 'linear', position: 'left', beginAtZero: true, ticks: { color: textColor, callback: value => '₹' + value }, grid: { color: gridColor }, title: { display: true, text: 'Revenue', color: textColor } },
-                yOrders: { type: 'linear', position: 'right', beginAtZero: true, ticks: { color: textColor, stepSize: 1 }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Orders', color: textColor } }
+                x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                y: { position: 'left', ticks: { color: textColor }, grid: { color: gridColor }, title: { display: true, text: 'Revenue (₹)', color: textColor } },
+                y1: { position: 'right', ticks: { color: textColor }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Number of Orders', color: textColor } }
             },
-            plugins: { legend: { labels: { color: textColor } }, tooltip: { mode: 'index', intersect: false } }
+            plugins: { legend: { labels: { color: textColor } } }
         }
     });
 }
 
-// --- MENU MANAGEMENT ---
 async function renderMenu(container) {
     container.innerHTML = `
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-semibold">Menu Items</h3>
             <button id="add-item-btn" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium">Add New Item</button>
         </div>
-        <div class="bg-card rounded-lg border border-border">
-            <div class="grid grid-cols-6 gap-4 font-semibold text-sm text-muted-foreground px-4 py-2 border-b border-border">
-                <div class="col-span-2">Name</div><div>Category</div><div>Price</div><div>Available</div><div>Actions</div>
-            </div>
+        <div class="bg-card p-4 rounded-lg shadow-sm">
             <div id="menu-table-body" class="divide-y divide-border"></div>
         </div>
         <div id="menu-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
@@ -472,74 +436,98 @@ async function renderMenu(container) {
     const loadMenu = async () => {
         const { data, error } = await supabase.from('products').select('*').order('category').order('name');
         if (state.currentPage !== 'menu' || error) { if(error) showToast('Failed to load menu items.'); return; }
-        const body = $('#menu-table-body');
-        if (body) body.innerHTML = data.map(i => `<div class="grid grid-cols-6 gap-4 items-center px-4 py-3 text-sm"><div class="col-span-2 font-medium">${i.name}</div><div>${i.category}</div><div>₹${i.price}</div><div><span class="px-2 py-1 text-xs rounded-full ${i.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${i.is_available ? 'Yes' : 'No'}</span></div><div class="space-x-2"><button class="edit-item-btn text-blue-500 hover:underline" data-id="${i.id}">Edit</button><button class="delete-item-btn text-red-500 hover:underline" data-id="${i.id}">Delete</button></div></div>`).join('');
+        const tableBody = $('#menu-table-body');
+        if (tableBody) tableBody.innerHTML = `
+            <div class="grid grid-cols-6 gap-4 font-semibold text-sm text-muted-foreground px-4 py-2 border-b">
+                <div class="col-span-2">Name</div><div>Category</div><div>Price</div><div>Available</div><div>Actions</div>
+            </div>` + data.map(item => `
+            <div class="grid grid-cols-6 gap-4 items-center px-4 py-3 text-sm">
+                <div class="col-span-2 font-medium">${item.name}</div><div>${item.category}</div><div>₹${item.price}</div>
+                <div><span class="px-2 py-1 text-xs rounded-full ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${item.is_available ? 'Yes' : 'No'}</span></div>
+                <div class="space-x-2"><button class="edit-item-btn text-blue-600 hover:underline" data-id="${item.id}">Edit</button><button class="delete-item-btn text-red-600 hover:underline" data-id="${item.id}">Delete</button></div>
+            </div>`).join('');
     };
 
     const openModal = (item = null) => {
         $('#menu-modal').classList.remove('hidden');
         $('#modal-title').textContent = item ? 'Edit Menu Item' : 'Add Menu Item';
-        $('#item-id').value = item?.id || '';
-        $('#item-name').value = item?.name || '';
-        $('#item-category').value = item?.category || '';
-        $('#item-price').value = item?.price || '';
-        $('#item-description').value = item?.description || '';
-        $('#item-image').value = item?.image_url || '';
+        $('#item-id').value = item?.id || ''; $('#item-name').value = item?.name || ''; $('#item-category').value = item?.category || '';
+        $('#item-price').value = item?.price || ''; $('#item-description').value = item?.description || ''; $('#item-image').value = item?.image_url || '';
         $('#item-available').checked = item ? item.is_available : true;
     };
     const closeModal = () => $('#menu-modal').classList.add('hidden');
 
     await loadMenu();
+
     $('#add-item-btn').addEventListener('click', () => openModal());
     $('#cancel-btn').addEventListener('click', closeModal);
-    $('#menu-item-form').addEventListener('submit', async e => {
+    $('#menu-item-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = $('#item-id').value;
-        const data = { name: $('#item-name').value, category: $('#item-category').value, price: parseFloat($('#item-price').value), description: $('#item-description').value, image_url: $('#item-image').value, is_available: $('#item-available').checked };
-        const { error } = id ? await supabase.from('products').update(data).eq('id', id) : await supabase.from('products').insert([data]);
+        const itemData = { name: $('#item-name').value, category: $('#item-category').value, price: parseFloat($('#item-price').value), description: $('#item-description').value, image_url: $('#item-image').value, is_available: $('#item-available').checked };
+        const { error } = id ? await supabase.from('products').update(itemData).eq('id', id) : await supabase.from('products').insert([itemData]);
         if (error) showToast(`Error: ${error.message}`);
-        else { showToast(`Item ${id ? 'updated' : 'added'}.`); closeModal(); loadMenu(); }
+        else { showToast(`Item ${id ? 'updated' : 'added'}.`); closeModal(); await loadMenu(); }
     });
-    container.addEventListener('click', async e => {
-        const t = e.target;
-        if (t.classList.contains('edit-item-btn')) { const { data } = await supabase.from('products').select('*').eq('id', t.dataset.id).single(); openModal(data); }
-        if (t.classList.contains('delete-item-btn') && confirm('Delete this item?')) {
-            const { error } = await supabase.from('products').delete().eq('id', t.dataset.id);
-            if(error) showToast(`Error: ${error.message}`); else { showToast('Item deleted.'); loadMenu(); }
+    container.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('edit-item-btn')) {
+            const { data } = await supabase.from('products').select('*').eq('id', e.target.dataset.id).single();
+            openModal(data);
+        }
+        if (e.target.classList.contains('delete-item-btn')) {
+            if (confirm('Are you sure?')) {
+                const { error } = await supabase.from('products').delete().eq('id', e.target.dataset.id);
+                if (error) showToast(`Error: ${error.message}`); else { showToast('Item deleted.'); await loadMenu(); }
+            }
         }
     });
 }
 
 async function renderOrders(container) {
     container.innerHTML = `
-        <div class="bg-card rounded-lg border border-border">
-            <div class="grid grid-cols-6 gap-4 font-semibold text-sm text-muted-foreground px-4 py-2 border-b border-border">
-                <div>Order ID</div><div>Customer</div><div>Table</div><div>Total</div><div>Status</div><div>Actions</div>
-            </div>
+        <div class="bg-card p-4 rounded-lg shadow-sm">
             <div id="orders-table-body" class="divide-y divide-border"></div>
         </div>
         <div id="order-detail-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"></div>`;
-
     const loadOrders = async () => {
         const { data, error } = await supabase.from('orders').select('*, customers(name), tables(table_number)').order('created_at', { ascending: false });
-        if(state.currentPage !== 'orders' || error) { if(error) showToast('Failed to load orders.'); return; }
-        const body = $('#orders-table-body');
-        if(body) body.innerHTML = data.map(o => `<div class="grid grid-cols-6 gap-4 items-center px-4 py-3 text-sm"><div class="font-mono text-xs">${o.id.slice(0,8)}...</div><div>${o.customers?.name||'N/A'}</div><div>#${o.tables?.table_number||'N/A'}</div><div class="font-semibold">₹${o.total_amount.toFixed(2)}</div><div><select class="status-select bg-secondary border-border rounded-md p-1 text-xs" data-id="${o.id}"><option value="received" ${o.status==='received'?'selected':''}>Received</option><option value="preparing" ${o.status==='preparing'?'selected':''}>Preparing</option><option value="delivered" ${o.status==='delivered'?'selected':''}>Delivered</option><option value="cancelled" ${o.status==='cancelled'?'selected':''}>Cancelled</option></select></div><div><button class="view-order-btn text-blue-500 hover:underline" data-id="${o.id}">View</button></div></div>`).join('');
+        if (state.currentPage !== 'orders' || error) { if(error) showToast('Failed to load orders.'); return; }
+        const tableBody = $('#orders-table-body');
+        if (tableBody) tableBody.innerHTML = `
+            <div class="grid grid-cols-6 gap-4 font-semibold text-sm text-muted-foreground px-4 py-2 border-b">
+                <div>Order ID</div><div>Customer</div><div>Table</div><div>Total</div><div>Status</div><div>Actions</div>
+            </div>` + data.map(order => `
+            <div class="grid grid-cols-6 gap-4 items-center px-4 py-3 text-sm">
+                <div class="font-mono text-xs">${order.id.slice(0, 8)}...</div><div>${order.customers?.name || 'N/A'}</div><div>#${order.tables?.table_number || 'N/A'}</div>
+                <div class="font-semibold">₹${order.total_amount.toFixed(2)}</div>
+                <div><select class="status-select bg-secondary border-border rounded-md p-1 text-xs" data-id="${order.id}">
+                    <option value="received" ${order.status === 'received' ? 'selected' : ''}>Received</option><option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
+                    <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option><option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                </select></div>
+                <div><button class="view-order-btn text-blue-600 hover:underline" data-id="${order.id}">View</button></div>
+            </div>`).join('');
     };
     await loadOrders();
-
-    container.addEventListener('change', async e => {
+    container.addEventListener('change', async (e) => {
         if (e.target.classList.contains('status-select')) {
             const { error } = await supabase.from('orders').update({ status: e.target.value }).eq('id', e.target.dataset.id);
             if (error) showToast(`Error: ${error.message}`); else showToast('Order status updated.');
         }
     });
-    container.addEventListener('click', async e => {
+    container.addEventListener('click', async (e) => {
         if (e.target.classList.contains('view-order-btn')) {
-            const { data, error } = await supabase.from('orders').select('*, customers(name), tables(table_number), order_items(*, products(name))').eq('id', e.target.dataset.id).single();
-            if(error) { showToast('Could not fetch details'); return; }
+            const { data: order, error } = await supabase.from('orders').select('*, customers(name), tables(table_number), order_items(*, products(name))').eq('id', e.target.dataset.id).single();
+            if(error) { showToast('Could not fetch order details'); return; }
             const modal = $('#order-detail-modal');
-            modal.innerHTML = `<div class="bg-card rounded-lg shadow-xl p-6 w-full max-w-lg relative"><button onclick="$('#order-detail-modal').classList.add('hidden')" class="absolute top-4 right-4 text-muted-foreground">&times;</button><h3 class="text-lg font-semibold mb-4">Order Details (${data.id.slice(0,8)})</h3><div class="text-sm space-y-2 mb-4"><p><strong>Customer:</strong> ${data.customers?.name||'N/A'}</p><p><strong>Table:</strong> #${data.tables?.table_number||'N/A'}</p><p><strong>Instructions:</strong> ${data.special_instructions||'None'}</p></div><div class="border rounded-lg">${data.order_items.map(item => `<div class="flex justify-between p-2 border-b"><p>${item.quantity} x ${item.products?.name||'[Deleted]'}</p><p>₹${(item.price_at_time_of_order*item.quantity).toFixed(2)}</p></div>`).join('')}<div class="flex justify-between p-2 font-bold"><p>Total</p><p>₹${data.total_amount.toFixed(2)}</p></div></div></div>`;
+            modal.innerHTML = `
+                <div class="bg-card rounded-lg shadow-xl p-6 w-full max-w-lg relative"><button onclick="$('#order-detail-modal').classList.add('hidden')" class="absolute top-4 right-4 text-muted-foreground">&times;</button>
+                    <h3 class="text-lg font-semibold mb-4">Order Details (${order.id.slice(0, 8)})</h3>
+                    <div class="text-sm space-y-2 mb-4"><p><strong>Customer:</strong> ${order.customers?.name || 'N/A'}</p><p><strong>Table:</strong> #${order.tables?.table_number || 'N/A'}</p><p><strong>Instructions:</strong> ${order.special_instructions || 'None'}</p></div>
+                    <div class="border rounded-lg">
+                        ${order.order_items.map(item => `<div class="flex justify-between p-2 border-b"><p>${item.quantity} x ${item.products?.name || '[? Product]'}</p><p>₹${(item.price_at_time_of_order * item.quantity).toFixed(2)}</p></div>`).join('')}
+                        <div class="flex justify-between p-2 font-bold"><p>Total</p><p>₹${order.total_amount.toFixed(2)}</p></div>
+                    </div>
+                </div>`;
             modal.classList.remove('hidden');
         }
     });
@@ -547,21 +535,25 @@ async function renderOrders(container) {
 
 async function renderCustomers(container) {
     container.innerHTML = `
-        <div class="bg-card rounded-lg border border-border">
-            <div class="grid grid-cols-4 gap-4 font-semibold text-sm text-muted-foreground px-4 py-2 border-b border-border">
-                <div>Name</div><div>Joined</div><div>Phone</div><div>ID</div>
-            </div>
+        <div class="bg-card p-4 rounded-lg shadow-sm">
             <div id="customers-table-body" class="divide-y divide-border"></div>
         </div>`;
     const { data, error } = await supabase.from('customers').select('*');
-    if (state.currentPage !== 'customers' || error) return;
-    const body = $('#customers-table-body');
-    if(body) body.innerHTML = data.map(c => `<div class="grid grid-cols-4 gap-4 items-center px-4 py-3 text-sm"><div class="font-medium">${c.name}</div><div>${new Date(c.created_at).toLocaleDateString()}</div><div>${c.whatsapp_number||'N/A'}</div><div class="font-mono text-xs">${c.id}</div></div>`).join('');
+    if (state.currentPage !== 'customers' || error) { if(error) showToast('Failed to load customers.'); return; }
+    const tableBody = $('#customers-table-body');
+    if (tableBody) tableBody.innerHTML = `
+        <div class="grid grid-cols-4 gap-4 font-semibold text-sm text-muted-foreground px-4 py-2 border-b">
+            <div>Name</div><div>Joined</div><div>Phone</div><div>ID</div>
+        </div>` + data.map(customer => `
+        <div class="grid grid-cols-4 gap-4 items-center px-4 py-3 text-sm">
+            <div class="font-medium">${customer.name}</div><div>${new Date(customer.created_at).toLocaleDateString()}</div>
+            <div>${customer.whatsapp_number || 'N/A'}</div><div class="font-mono text-xs">${customer.id}</div>
+        </div>`).join('');
 }
 
 function renderQrGenerator(container) {
     container.innerHTML = `
-        <div class="max-w-md mx-auto bg-card p-8 rounded-lg border border-border">
+        <div class="max-w-md mx-auto bg-card p-8 rounded-lg shadow-sm">
             <h3 class="text-lg font-semibold text-center mb-4">Generate Table QR Code</h3>
             <div class="flex space-x-2">
                 <input type="number" id="table-number-input" placeholder="Enter table number" class="w-full p-2 bg-secondary rounded-md border border-border">
@@ -573,30 +565,27 @@ function renderQrGenerator(container) {
             </div>
         </div>`;
     $('#generate-qr-btn').addEventListener('click', () => {
-        const num = $('#table-number-input').value;
-        if (!num) { showToast('Please enter a table number.'); return; }
-        const url = `https://hxousee.netlify.app/?table=${num}`;
-        const qrEl = $('#qrcode');
-        qrEl.innerHTML = '';
-        const qr = qrcode(0, 'L');
-        qr.addData(url);
-        qr.make();
-        qrEl.innerHTML = qr.createImgTag(6, 8);
-        $('#qr-title').textContent = `QR Code for Table #${num}`;
+        const tableNumber = $('#table-number-input').value;
+        if (!tableNumber) { showToast('Please enter a table number.'); return; }
+        const url = `https://hxousee.netlify.app/?table=${tableNumber}`;
+        const qrcodeContainer = $('#qrcode');
+        qrcodeContainer.innerHTML = '';
+        const qr = qrcode(0, 'L'); qr.addData(url); qr.make();
+        qrcodeContainer.innerHTML = qr.createImgTag(6, 8);
+        $('#qr-title').textContent = `QR Code for Table #${tableNumber}`;
         $('#qrcode-container').classList.remove('hidden');
     });
     $('#print-qr-btn').addEventListener('click', () => {
-        const content = $('#qrcode-container').innerHTML;
-        const win = window.open('', '', 'height=600,width=800');
-        win.document.write(`<html><head><title>Print QR</title><style>body{font-family:sans-serif;text-align:center;margin-top:50px;}</style></head><body>${content}</body></html>`);
-        win.document.close();
-        win.print();
+        const qrContent = $('#qrcode-container').innerHTML;
+        const printWindow = window.open('', '', 'height=600,width=800');
+        printWindow.document.write(`<html><head><title>Print QR Code</title><style>body { font-family: sans-serif; text-align: center; margin-top: 50px; }</style></head><body>${qrContent}</body></html>`);
+        printWindow.document.close(); printWindow.print();
     });
 }
 
 async function renderSettings(container) {
     container.innerHTML = `
-        <div class="max-w-2xl mx-auto bg-card p-8 rounded-lg border border-border">
+        <div class="max-w-2xl mx-auto bg-card p-8 rounded-lg shadow-sm">
             <h3 class="text-lg font-semibold mb-6">Application Settings</h3>
             <form id="settings-form" class="space-y-4">
                 <div><label class="text-sm font-medium">Welcome Title</label><input type="text" id="setting-welcome-title" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border"></div>
@@ -606,11 +595,14 @@ async function renderSettings(container) {
         </div>`;
     const { data, error } = await supabase.from('app_settings').select('*');
     if (state.currentPage !== 'settings' || error) { if(error) showToast('Failed to load settings.'); return; }
-    data.forEach(s => { const input = $(`#setting-${s.key.replace(/_/g, '-')}`); if (input) input.value = s.value; });
-    $('#settings-form').addEventListener('submit', async e => {
+    data.forEach(setting => {
+        const input = $(`#setting-${setting.key.replace(/_/g, '-')}`);
+        if (input) input.value = setting.value;
+    });
+    $('#settings-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const toUpdate = [{ key: 'welcome_title', value: $('#setting-welcome-title').value },{ key: 'welcome_subtitle', value: $('#setting-welcome-subtitle').value }];
-        const { error } = await supabase.from('app_settings').upsert(toUpdate);
+        const settingsToUpdate = [{ key: 'welcome_title', value: $('#setting-welcome-title').value }, { key: 'welcome_subtitle', value: $('#setting-welcome-subtitle').value }];
+        const { error } = await supabase.from('app_settings').upsert(settingsToUpdate);
         if (error) showToast(`Error: ${error.message}`); else showToast('Settings saved.');
     });
 }
@@ -618,74 +610,54 @@ async function renderSettings(container) {
 // =================================================================================
 //  SECTION 4: THEME & INITIALIZATION
 // =================================================================================
-
 function applyTheme(theme) {
-    const newTheme = theme || 'light';
-    document.documentElement.classList.remove(newTheme === 'light' ? 'dark' : 'light');
-    document.documentElement.classList.add(newTheme);
-    $('#theme-icon-dark').classList.toggle('hidden', newTheme === 'light');
-    $('#theme-icon-light').classList.toggle('hidden', newTheme === 'dark');
-    localStorage.setItem('theme', newTheme);
-
-    if (state.salesChart) {
-        const isDark = newTheme === 'dark';
-        const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
-        const textColor = isDark ? '#fafafa' : '#18181b';
-        const chart = state.salesChart;
-
-        if (chart.options.scales) {
-            chart.options.scales.x.ticks.color = textColor;
-            chart.options.scales.x.grid.color = gridColor;
-            
-            Object.keys(chart.options.scales).forEach(key => {
-                if (key.startsWith('y')) {
-                    chart.options.scales[key].ticks.color = textColor;
-                    chart.options.scales[key].grid.color = gridColor;
-                    if(chart.options.scales[key].title) {
-                       chart.options.scales[key].title.color = textColor;
-                    }
-                }
-            });
-        }
-        if (chart.options.plugins.legend) {
-            chart.options.plugins.legend.labels.color = textColor;
-        }
-        chart.update();
+    const isDark = theme === 'dark';
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.classList.toggle('light', !isDark);
+    $('#theme-icon-dark').classList.toggle('hidden', !isDark);
+    $('#theme-icon-light').classList.toggle('hidden', isDark);
+    localStorage.setItem('theme', theme);
+    if (state.currentPage === 'analytics' && state.chartInstance) {
+        renderAnalytics($('#page-content')); // Re-render chart with new theme colors
     }
-}
-
-async function cacheData() {
-    const { data: customers } = await supabase.from('customers').select('id, name');
-    if (customers) state.customersCache = customers.reduce((acc, c) => ({...acc, [c.id]: c.name}), {});
-    const { data: tables } = await supabase.from('tables').select('id, table_number');
-    if (tables) state.tablesCache = tables.reduce((acc, t) => ({...acc, [t.id]: t.table_number}), {});
-    const { data: products } = await supabase.from('products').select('id, name');
-    if (products) state.productsCache = products.reduce((acc, p) => ({...acc, [p.id]: p.name}), {});
 }
 
 async function initializeApp() {
     $('#login-screen').classList.add('hidden');
     $('#app-container').classList.remove('hidden');
     $('#user-email').textContent = state.user.email;
-    await cacheData();
-    applyTheme(localStorage.getItem('theme'));
+    applyTheme(localStorage.getItem('theme') || 'light');
+    
     $('#theme-toggle').addEventListener('click', () => applyTheme(localStorage.getItem('theme') === 'dark' ? 'light' : 'dark'));
     $('#logout-btn').addEventListener('click', async () => { await supabase.auth.signOut(); window.location.reload(); });
     document.body.addEventListener('click', initializeAudio, { once: true });
     
-    supabase.channel('public:orders').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
-        if (payload.eventType === 'INSERT') {
-            const { data: order } = await supabase.from('orders').select('*, order_items(*, products(name)), customers(name), tables(table_number)').eq('id', payload.new.id).single();
-            if (order) {
+    supabase.channel('public:orders')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
+            if (payload.eventType === 'INSERT') {
+                const { data: newOrder, error } = await supabase.from('orders').select('*, order_items(*, products(name)), customers(name), tables(table_number)').eq('id', payload.new.id).single();
+                if (error) return;
+                
                 const alertModal = $('#order-alert');
-                alertModal.innerHTML = `<div class="bg-card p-6 rounded-lg shadow-2xl w-full max-w-md text-left"><h2 class="text-2xl font-bold text-destructive mb-2">New Order Received!</h2><p class="text-sm text-muted-foreground mb-4">For ${order.customers?.name||'N/A'} at Table #${order.tables?.table_number||'N/A'}</p><div class="max-h-60 overflow-y-auto border rounded-lg p-3 bg-secondary">${order.order_items.map(item => `<div class="flex justify-between text-sm py-1"><span>${item.quantity} x ${item.products?.name||'[Deleted]'}</span><span>₹${(item.price_at_time_of_order*item.quantity).toFixed(2)}</span></div>`).join('')}<div class="flex justify-between p-2 font-bold border-t mt-2"><p>Total</p><p>₹${order.total_amount.toFixed(2)}</p></div></div>${order.special_instructions ? `<p class="text-sm mt-4 text-red-500 font-semibold">Instructions: ${order.special_instructions}</p>` : ''}<button id="dismiss-alert-btn" class="w-full mt-6 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-bold">Acknowledge & Close</button></div>`;
-                alertModal.querySelector('#dismiss-alert-btn').addEventListener('click', () => { stopOrderAlarm(); alertModal.classList.add('hidden'); });
-                if(state.audioInitialized) { startOrderAlarm(); alertModal.classList.remove('hidden'); } else { showToast("New Order! (Audio not enabled)"); }
+                const itemsHTML = newOrder.order_items.map(item => `<div class="flex justify-between text-sm py-1"><span>${item.quantity} x ${item.products?.name || '[? Product]'}</span><span>₹${(item.price_at_time_of_order * item.quantity).toFixed(2)}</span></div>`).join('');
+                alertModal.innerHTML = `
+                    <div class="bg-card p-6 rounded-lg shadow-2xl w-full max-w-md text-left">
+                        <h2 class="text-2xl font-bold text-destructive mb-2">New Order Received!</h2>
+                        <p class="text-sm text-muted-foreground mb-4">For ${newOrder.customers?.name || 'N/A'} at Table #${newOrder.tables?.table_number || 'N/A'}</p>
+                        <div class="max-h-60 overflow-y-auto border rounded-lg p-3 bg-secondary">${itemsHTML}<div class="flex justify-between p-2 font-bold border-t mt-2"><p>Total</p><p>₹${newOrder.total_amount.toFixed(2)}</p></div></div>
+                        ${newOrder.special_instructions ? `<p class="text-sm mt-4 text-red-600 font-semibold">Instructions: ${newOrder.special_instructions}</p>` : ''}
+                        <button id="dismiss-alert-btn" class="w-full mt-6 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-bold">Acknowledge & Close</button>
+                    </div>`;
+                $('#dismiss-alert-btn').addEventListener('click', () => { stopOrderAlarm(); alertModal.classList.add('hidden'); });
+                
+                if(state.audioInitialized) { startOrderAlarm(); alertModal.classList.remove('hidden'); } 
+                else { showToast("New Order! (Audio not enabled)"); }
             }
-        }
-        if (state.currentPage === 'dashboard') { loadDashboardStats(); loadLiveOrders(); } 
-        else if (state.currentPage === 'orders' || state.currentPage === 'analytics') { PAGES[state.currentPage].render($('#page-content')); }
-    }).subscribe();
+            if (state.currentPage === 'dashboard') await loadLiveOrders();
+            if (state.currentPage === 'orders') await renderOrders($('#page-content'));
+        })
+        .subscribe();
+
     navigateTo('dashboard');
 }
 
@@ -696,12 +668,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         button.disabled = true; button.textContent = "Signing In...";
         const { data, error } = await supabase.auth.signInWithPassword({ email: $('#email').value, password: $('#password').value });
         if (error) { $('#login-error').textContent = error.message; button.disabled = false; button.textContent = "Sign In"; } 
-        else { $('#login-error').textContent = ''; state.user = data.user; initializeApp(); }
+        else { state.user = data.user; await initializeApp(); }
     });
+
     const { data: { session } } = await supabase.auth.getSession();
-    if (session) { state.user = session.user; initializeApp(); } else { $('#login-screen').classList.remove('hidden'); }
+    if (session) { state.user = session.user; await initializeApp(); } 
+    else { $('#login-screen').classList.remove('hidden'); }
 });
 </script>
 </body>
 </html>
-
