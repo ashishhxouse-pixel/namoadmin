@@ -34,8 +34,9 @@
         .fade-in { animation: fadeIn 0.5s ease-in-out; }
         .fade-out { animation: fadeOut 0.5s ease-in-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-        @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); height: 0; padding: 0; margin: 0; border: 0; } }
+        @keyframes fadeOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); height: 0; padding: 0; margin: 0; border: 0; visibility: hidden; } }
         
+        /* Custom scrollbar for webkit browsers */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: var(--secondary); }
         ::-webkit-scrollbar-thumb { background: var(--muted-foreground); border-radius: 4px; }
@@ -73,7 +74,9 @@
                 <div class="h-16 flex items-center justify-center border-b border-border">
                     <h1 class="text-2xl font-bold text-card-foreground">H<span class="text-red-500">X</span>OUSE</h1>
                 </div>
-                <nav id="sidebar-nav" class="flex-grow p-4 space-y-2"></nav>
+                <nav id="sidebar-nav" class="flex-grow p-4 space-y-2">
+                    <!-- Nav items will be injected by JS -->
+                </nav>
                 <div class="p-4 border-t border-border space-y-2">
                     <button id="theme-toggle" class="w-full flex items-center justify-center p-2 rounded-lg bg-secondary text-secondary-foreground">
                         <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -92,7 +95,9 @@
                     <h2 id="page-title" class="text-xl font-semibold text-card-foreground">Dashboard</h2>
                     <div id="user-email" class="text-sm text-muted-foreground"></div>
                 </header>
-                <div id="page-content" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
+                <div id="page-content" class="flex-1 overflow-y-auto p-6 space-y-6">
+                    <!-- Content will be injected by JS -->
+                </div>
             </main>
         </div>
     </div>
@@ -102,8 +107,10 @@
         <p id="toast-message"></p>
     </div>
 
-    <!-- New Order Alert Modal -->
-    <div id="order-alert" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"></div>
+    <!-- Alert Modal -->
+    <div id="alert-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <!-- Content injected by JavaScript -->
+    </div>
     
     <!-- Embedded Audio -->
     <audio id="notification-sound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA" preload="none"></audio>
@@ -124,7 +131,7 @@ const state = {
     currentPage: 'dashboard',
     chartInstance: null,
     audioInitialized: false,
-    analyticsDateRange: 30, // 7, 30, 90
+    dashboardDateRange: '30d', // '1d', '7d', '30d'
     user: null,
     customersCache: {},
     tablesCache: {},
@@ -132,19 +139,17 @@ const state = {
 
 const ICONS = {
     dashboard: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>`,
-    analytics: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>`,
     menu: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>`,
     orders: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 9h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>`,
     customers: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>`,
-    settings: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`,
+    settings: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0 3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>`,
     qr: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 24 24" fill="currentColor"><path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 21h8v-8h-8v8zm2-6h4v4h-4v-4z"/></svg>`
 };
 
 const PAGES = {
     dashboard: { title: "Dashboard", icon: ICONS.dashboard, render: renderDashboard },
-    analytics: { title: "Analytics", icon: ICONS.analytics, render: renderAnalytics },
     menu: { title: "Menu Management", icon: ICONS.menu, render: renderMenu },
-    orders: { title: "Order Tracking", icon: ICONS.orders, render: renderOrders },
+    orders: { title: "Order History", icon: ICONS.orders, render: renderOrders },
     customers: { title: "Customers", icon: ICONS.customers, render: renderCustomers },
     qr: { title: "Generate QR", icon: ICONS.qr, render: renderQrGenerator },
     settings: { title: "Settings", icon: ICONS.settings, render: renderSettings },
@@ -153,6 +158,7 @@ const PAGES = {
 // =================================================================================
 //  SECTION 2: CORE LOGIC & NAVIGATION
 // =================================================================================
+
 function navigateTo(page) {
     state.currentPage = page;
     render();
@@ -165,16 +171,19 @@ function render() {
         const isActive = state.currentPage === key;
         return `
             <button onclick="navigateTo('${key}')" class="w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg ${isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary'}">
-                ${page.icon} ${page.title}
-            </button>`;
+                ${page.icon}
+                ${page.title}
+            </button>
+        `;
     }).join('');
 
     const pageContent = $('#page-content');
-    $('#page-title').textContent = PAGES[state.currentPage].title;
-    pageContent.innerHTML = `<div class="text-center text-muted-foreground">Loading...</div>`;
+    const pageTitle = $('#page-title');
+    pageContent.innerHTML = '<div class="text-center text-muted-foreground">Loading...</div>';
+    pageTitle.textContent = PAGES[state.currentPage].title;
     
     pageContent.classList.remove('fade-in');
-    void pageContent.offsetWidth; 
+    void pageContent.offsetWidth; // Trigger reflow
     pageContent.classList.add('fade-in');
 
     PAGES[state.currentPage].render(pageContent);
@@ -187,24 +196,28 @@ function showToast(message) {
     setTimeout(() => { toast.classList.add('hidden'); }, 3000);
 }
 
+// --- AUDIO & ALERTS ---
 function initializeAudio() {
     if (state.audioInitialized) return;
     const audio = $('#notification-sound');
     audio.play().then(() => {
         audio.pause();
         state.audioInitialized = true;
-        showToast('Sound notifications enabled!');
-        if (state.currentPage === 'dashboard') renderDashboard($('#page-content'));
-    }).catch(error => console.warn("Audio playback failed to initialize:", error));
+        showToast('Audio enabled!');
+        const audioPrompt = $('#audio-prompt');
+        if (audioPrompt) audioPrompt.remove();
+    }).catch(error => {
+        console.warn("Audio playback failed to initialize:", error);
+    });
 }
 
-function startOrderAlarm() {
+function startAlarm() {
     const audio = $('#notification-sound');
     audio.loop = true;
     audio.play().catch(e => console.error("Could not play alarm:", e));
 }
 
-function stopOrderAlarm() {
+function stopAlarm() {
     const audio = $('#notification-sound');
     audio.pause();
     audio.currentTime = 0;
@@ -214,6 +227,8 @@ function stopOrderAlarm() {
 // =================================================================================
 //  SECTION 3: PAGE RENDERERS
 // =================================================================================
+
+// --- DASHBOARD ---
 async function renderDashboard(container) {
     const audioInitHTML = !state.audioInitialized
         ? `<div id="audio-prompt" class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6" role="alert">
@@ -221,57 +236,197 @@ async function renderDashboard(container) {
                 <div class="py-1"><svg class="fill-current h-6 w-6 text-yellow-500 mr-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M2.93 17.07A10 10 0 1 1 17.07 2.93 10 10 0 0 1 2.93 17.07zM9 11v4h2v-4H9zm0-4h2v2H9V7z"/></svg></div>
                 <div>
                   <p class="font-bold">Enable Sound Notifications</p>
-                  <p class="text-sm">Click the "Test Audio" button to enable sound for new orders.</p>
-                  <button id="test-audio-btn" class="mt-2 bg-yellow-500 text-white font-bold py-1 px-2 rounded text-xs">Test Audio</button>
+                  <p class="text-sm">Click the button to enable sound for new orders and staff calls.</p>
+                  <button id="enable-audio-btn" class="mt-2 bg-yellow-500 text-white font-bold py-1 px-2 rounded text-xs">Enable Audio</button>
                 </div>
             </div>
-           </div>` : '';
+           </div>`
+        : '';
+        
+    const getActiveClass = (range) => state.dashboardDateRange === range ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground';
+
     container.innerHTML = `
         ${audioInitHTML}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="dashboard-stats">
-            <div class="bg-card p-6 rounded-lg shadow-sm flex items-center justify-center text-muted-foreground">Loading stats...</div>
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Statistics</h3>
+            <div class="flex justify-end space-x-2">
+                <button class="date-range-btn px-3 py-1 rounded-md text-sm font-medium ${getActiveClass('1d')}" data-range="1d">1 Day</button>
+                <button class="date-range-btn px-3 py-1 rounded-md text-sm font-medium ${getActiveClass('7d')}" data-range="7d">7 Days</button>
+                <button class="date-range-btn px-3 py-1 rounded-md text-sm font-medium ${getActiveClass('30d')}" data-range="30d">30 Days</button>
+            </div>
         </div>
-        <div class="mt-8">
-            <h3 class="text-lg font-semibold mb-4">New Live Orders</h3>
-            <div id="live-orders-container" class="space-y-4"></div>
-        </div>`;
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div id="card-orders" class="bg-card p-6 rounded-lg shadow-sm"></div>
+            <div id="card-revenue" class="bg-card p-6 rounded-lg shadow-sm"></div>
+            <div id="card-customers" class="bg-card p-6 rounded-lg shadow-sm"></div>
+        </div>
+        
+        <div class="mt-8 bg-card p-6 rounded-lg shadow-sm">
+            <h3 class="text-lg font-semibold mb-4">Sales Analytics</h3>
+            <canvas id="salesChart"></canvas>
+        </div>
 
-    if ($('#test-audio-btn')) {
-        $('#test-audio-btn').addEventListener('click', () => {
-            initializeAudio();
-            const audio = $('#notification-sound');
-            audio.loop = false;
-            audio.currentTime = 0;
-            audio.play();
-        });
-    }
+        <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+                <h3 class="text-lg font-semibold mb-4">New Live Orders</h3>
+                <div id="live-orders-container" class="space-y-4 max-h-[50vh] overflow-y-auto pr-2"></div>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Pending Staff Calls</h3>
+                <div id="staff-calls-container" class="space-y-4 max-h-[50vh] overflow-y-auto pr-2"></div>
+            </div>
+        </div>
+    `;
+
+    // Add event listeners for new elements
+    const enableAudioBtn = $('#enable-audio-btn');
+    if (enableAudioBtn) enableAudioBtn.addEventListener('click', initializeAudio);
     
+    container.querySelectorAll('.date-range-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            state.dashboardDateRange = e.target.dataset.range;
+            renderDashboard(container); // Re-render
+        });
+    });
+
+    // Event listeners for acknowledging orders and staff calls
     container.addEventListener('click', async (e) => {
-        const button = e.target.closest('.acknowledge-order-btn');
-        if (button) {
-            button.disabled = true;
-            button.textContent = '...';
-            const { error } = await supabase.from('orders').update({ status: 'preparing' }).eq('id', button.dataset.id);
-            if (error) {
-                showToast(`Error: ${error.message}`);
-                button.disabled = false;
-                button.textContent = 'Acknowledge';
-            } else {
-                showToast('Order acknowledged.');
-            }
+        const ackOrderBtn = e.target.closest('.acknowledge-order-btn');
+        if (ackOrderBtn) {
+            const orderId = ackOrderBtn.dataset.id;
+            ackOrderBtn.disabled = true;
+            ackOrderBtn.textContent = '...';
+            const { error } = await supabase.from('orders').update({ status: 'preparing' }).eq('id', orderId);
+            if (error) showToast(`Error: ${error.message}`);
+            else showToast('Order acknowledged.');
+        }
+
+        const ackStaffCallBtn = e.target.closest('.acknowledge-call-btn');
+        if (ackStaffCallBtn) {
+            const callId = ackStaffCallBtn.dataset.id;
+            ackStaffCallBtn.disabled = true;
+            ackStaffCallBtn.textContent = '...';
+            const { error } = await supabase.from('staff_calls').update({ status: 'handled' }).eq('id', callId);
+            if (error) showToast(`Error: ${error.message}`);
+            else showToast('Staff call handled.');
         }
     });
 
-    await loadDashboardStats();
+    // --- Load initial data ---
+    await loadDashboardData();
     await loadLiveOrders();
+    await loadPendingStaffCalls();
 }
 
+async function loadDashboardData() {
+    const { data: allOrders, error } = await supabase.from('orders').select('total_amount, created_at');
+    if (error || state.currentPage !== 'dashboard') return;
+
+    // Filter logic
+    const now = new Date();
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0); // Start of today
+    switch (state.dashboardDateRange) {
+        case '1d': break;
+        case '7d': startDate.setDate(now.getDate() - 7); break;
+        case '30d': startDate.setDate(now.getDate() - 30); break;
+    }
+
+    const filteredOrders = allOrders.filter(order => new Date(order.created_at) >= startDate);
+
+    // Render cards
+    const cardOrders = $('#card-orders');
+    if(cardOrders) cardOrders.innerHTML = createStatCard('Total Orders', filteredOrders.length, '📝');
+    
+    const totalRevenue = filteredOrders.reduce((acc, order) => acc + order.total_amount, 0);
+    const cardRevenue = $('#card-revenue');
+    if(cardRevenue) cardRevenue.innerHTML = createStatCard('Total Revenue', `₹${totalRevenue.toFixed(2)}`, '💰');
+
+    const cardCustomers = $('#card-customers');
+    if(cardCustomers) cardCustomers.innerHTML = createStatCard('Total Customers', Object.keys(state.customersCache).length, '👥');
+
+
+    // Chart data processing
+    updateSalesChart(filteredOrders);
+}
+
+function updateSalesChart(orders) {
+    const ctx = document.getElementById('salesChart')?.getContext('2d');
+    if (!ctx) return;
+
+    const data = { labels: [], datasets: [{ label: 'Sales', data: [], tension: 0.1 }] };
+    let groupedData = {};
+
+    if (state.dashboardDateRange === '1d') {
+        // Group by hour
+        groupedData = orders.reduce((acc, order) => {
+            const hour = new Date(order.created_at).getHours();
+            const label = `${hour}:00`;
+            if (!acc[label]) acc[label] = 0;
+            acc[label] += order.total_amount;
+            return acc;
+        }, {});
+        data.labels = Array.from({length: 24}, (_, i) => `${i}:00`);
+        data.datasets[0].data = data.labels.map(label => groupedData[label] || 0);
+    } else {
+        // Group by day
+        groupedData = orders.reduce((acc, order) => {
+            const day = new Date(order.created_at).toLocaleDateString('en-CA'); // YYYY-MM-DD
+            if (!acc[day]) acc[day] = 0;
+            acc[day] += order.total_amount;
+            return acc;
+        }, {});
+        
+        const sortedDays = Object.keys(groupedData).sort();
+        data.labels = sortedDays.map(d => new Date(d).toLocaleDateString('en-GB', {day: 'numeric', month: 'short'}));
+        data.datasets[0].data = sortedDays.map(day => groupedData[day]);
+    }
+    
+    // Theme colors for chart
+    const isDark = document.documentElement.classList.contains('dark');
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+    const labelColor = isDark ? '#fafafa' : '#111827';
+    const primaryColor = isDark ? '#fafafa' : '#111827';
+
+    if (state.chartInstance) state.chartInstance.destroy();
+    
+    state.chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true, ticks: { color: labelColor }, grid: { color: gridColor } },
+                x: { ticks: { color: labelColor }, grid: { color: gridColor } }
+            },
+            plugins: {
+                legend: { labels: { color: labelColor } }
+            },
+            elements: {
+                line: { borderColor: primaryColor, backgroundColor: primaryColor + '33' },
+                point: { backgroundColor: primaryColor, radius: 4 }
+            }
+        }
+    });
+}
+
+function createStatCard(title, value, icon) {
+    return `
+        <h3 class="text-sm font-medium text-muted-foreground">${title}</h3>
+        <div class="mt-2 flex items-center justify-between">
+            <p class="text-3xl font-bold">${value}</p>
+            <span class="text-3xl">${icon}</span>
+        </div>`;
+}
+
+// --- LIVE ORDER & STAFF CALL RENDERING ---
 function createOrderCardHTML(order) {
     const itemsHTML = order.order_items.map(item => `
         <div class="flex justify-between text-sm py-1">
-            <span>${item.quantity} x ${item.products?.name || '[? Product]'}</span>
+            <span>${item.quantity} x ${item.products?.name || '[?]' }</span>
             <span>₹${(item.price_at_time_of_order * item.quantity).toFixed(2)}</span>
-        </div>`).join('');
+        </div>
+    `).join('');
 
     return `
         <div id="order-card-${order.id}" class="bg-card p-4 rounded-lg shadow-sm border-l-4 border-blue-500 fade-in">
@@ -285,129 +440,48 @@ function createOrderCardHTML(order) {
             </div>
             <div class="mt-3 border-t border-border pt-2">${itemsHTML}</div>
             ${order.special_instructions ? `<p class="text-sm mt-2 text-red-600 font-semibold">Instructions: ${order.special_instructions}</p>` : ''}
-        </div>`;
+        </div>
+    `;
+}
+
+function createStaffCallCardHTML(call) {
+    return `
+        <div id="call-card-${call.id}" class="bg-card p-4 rounded-lg shadow-sm border-l-4 border-orange-500 fade-in">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="font-bold">Staff Request</p>
+                    <p class="text-sm text-muted-foreground">From Table #${call.tables?.table_number || 'N/A'}</p>
+                    <p class="text-xs text-muted-foreground mt-1">Received at ${new Date(call.created_at).toLocaleTimeString()}</p>
+                </div>
+                <button data-id="${call.id}" class="acknowledge-call-btn bg-orange-500 text-white px-3 py-1 text-xs font-bold rounded-full flex-shrink-0">Handle</button>
+            </div>
+        </div>
+    `;
 }
 
 async function loadLiveOrders() {
-    const { data, error } = await supabase.from('orders').select('*, order_items(*, products(name)), customers(name), tables(table_number)').eq('status', 'received').order('created_at', { ascending: true });
-    if (state.currentPage !== 'dashboard' || error) { if(error) console.error("Error loading live orders:", error); return; }
+    const { data, error } = await supabase
+        .from('orders').select('*, order_items(*, products(name)), customers(name), tables(table_number)')
+        .eq('status', 'received').order('created_at', { ascending: true });
+
+    if (state.currentPage !== 'dashboard' || error) return;
     const container = $('#live-orders-container');
     if (!container) return;
     container.innerHTML = data.length === 0 ? `<p class="text-center text-muted-foreground p-4">No new orders waiting.</p>` : data.map(createOrderCardHTML).join('');
 }
 
-async function loadDashboardStats() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const { data: orders, error } = await supabase.from('orders').select('total_amount').gte('created_at', today.toISOString());
-    const { count: customersCount, error: custError } = await supabase.from('customers').select('*', { count: 'exact', head: true });
-
-    if (state.currentPage !== 'dashboard') return;
+async function loadPendingStaffCalls() {
+    const { data, error } = await supabase
+        .from('staff_calls').select('*, tables(table_number)')
+        .eq('status', 'pending').order('created_at', { ascending: true });
     
-    const container = $('#dashboard-stats');
-    if (error || custError) { container.innerHTML = `<div class="bg-card p-6 rounded-lg shadow-sm text-destructive">Failed to load stats.</div>`; return; }
-    
-    const totalRevenue = orders?.reduce((acc, order) => acc + order.total_amount, 0) || 0;
-    container.innerHTML = `
-        ${createStatCard('Todays Revenue', `₹${totalRevenue.toFixed(2)}`, '💰')}
-        ${createStatCard('Todays Orders', orders?.length || 0, '📝')}
-        ${createStatCard('Total Customers', customersCount || 0, '👥')}`;
+    if (state.currentPage !== 'dashboard' || error) return;
+    const container = $('#staff-calls-container');
+    if (!container) return;
+    container.innerHTML = data.length === 0 ? `<p class="text-center text-muted-foreground p-4">No pending staff calls.</p>` : data.map(createStaffCallCardHTML).join('');
 }
 
-function createStatCard(title, value, icon) {
-    return `
-        <div class="bg-card p-6 rounded-lg shadow-sm">
-            <h3 class="text-sm font-medium text-muted-foreground">${title}</h3>
-            <div class="mt-2 flex items-center justify-between">
-                <p class="text-3xl font-bold">${value}</p>
-                <span class="text-3xl">${icon}</span>
-            </div>
-        </div>`;
-}
-
-async function renderAnalytics(container) {
-    const getActiveClass = (range) => state.analyticsDateRange === range ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground';
-
-    container.innerHTML = `
-        <div class="flex justify-end space-x-2 mb-4">
-            <button class="date-range-btn px-3 py-1 rounded-md text-sm font-medium ${getActiveClass(7)}" data-range="7">7 Days</button>
-            <button class="date-range-btn px-3 py-1 rounded-md text-sm font-medium ${getActiveClass(30)}" data-range="30">30 Days</button>
-            <button class="date-range-btn px-3 py-1 rounded-md text-sm font-medium ${getActiveClass(90)}" data-range="90">90 Days</button>
-        </div>
-        <div class="bg-card p-6 rounded-lg shadow-sm">
-            <canvas id="salesChart"></canvas>
-        </div>`;
-
-    container.querySelectorAll('.date-range-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            state.analyticsDateRange = parseInt(e.target.dataset.range, 10);
-            renderAnalytics(container);
-        });
-    });
-
-    const { labels, revenueData, ordersData } = await loadAnalyticsData(state.analyticsDateRange);
-    createSalesChart(labels, revenueData, ordersData);
-}
-
-async function loadAnalyticsData(days) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    
-    const { data, error } = await supabase.from('orders').select('created_at, total_amount').gte('created_at', startDate.toISOString()).order('created_at');
-
-    if (error) { showToast('Error loading chart data'); return { labels: [], revenueData: [], ordersData: [] }; }
-
-    const dailyData = data.reduce((acc, order) => {
-        const date = new Date(order.created_at).toISOString().split('T')[0];
-        if (!acc[date]) acc[date] = { revenue: 0, orders: 0 };
-        acc[date].revenue += order.total_amount;
-        acc[date].orders += 1;
-        return acc;
-    }, {});
-
-    const labels = [];
-    const revenueData = [];
-    const ordersData = [];
-    for (let i = 0; i < days; i++) {
-        const d = new Date(startDate);
-        d.setDate(d.getDate() + i);
-        const dateString = d.toISOString().split('T')[0];
-        labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-        revenueData.push(dailyData[dateString]?.revenue || 0);
-        ordersData.push(dailyData[dateString]?.orders || 0);
-    }
-    return { labels, revenueData, ordersData };
-}
-
-function createSalesChart(labels, revenueData, ordersData) {
-    if (state.chartInstance) state.chartInstance.destroy();
-    
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    const gridColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-    const textColor = isDarkMode ? '#fafafa' : '#111827';
-
-    state.chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                { type: 'line', label: 'Revenue (₹)', data: revenueData, borderColor: '#34d399', backgroundColor: '#34d399', yAxisID: 'y', tension: 0.1 },
-                { type: 'bar', label: 'Orders', data: ordersData, backgroundColor: '#60a5fa', yAxisID: 'y1' }
-            ]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            scales: {
-                x: { ticks: { color: textColor }, grid: { color: gridColor } },
-                y: { position: 'left', ticks: { color: textColor }, grid: { color: gridColor }, title: { display: true, text: 'Revenue (₹)', color: textColor } },
-                y1: { position: 'right', ticks: { color: textColor }, grid: { drawOnChartArea: false }, title: { display: true, text: 'Number of Orders', color: textColor } }
-            },
-            plugins: { legend: { labels: { color: textColor } } }
-        }
-    });
-}
-
+// --- MENU MANAGEMENT ---
 async function renderMenu(container) {
     container.innerHTML = `
         <div class="flex justify-between items-center mb-4">
@@ -415,60 +489,113 @@ async function renderMenu(container) {
             <button id="add-item-btn" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium">Add New Item</button>
         </div>
         <div class="bg-card p-4 rounded-lg shadow-sm">
+            <div class="grid grid-cols-6 gap-4 font-semibold text-sm text-muted-foreground px-4 py-2 border-b">
+                <div class="col-span-2">Name</div>
+                <div>Category</div>
+                <div>Price</div>
+                <div>Available</div>
+                <div>Actions</div>
+            </div>
             <div id="menu-table-body" class="divide-y divide-border"></div>
         </div>
-        <div id="menu-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div id="menu-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div class="bg-card rounded-lg shadow-xl p-6 w-full max-w-md">
                 <h3 id="modal-title" class="text-lg font-semibold mb-4">Add Menu Item</h3>
                 <form id="menu-item-form" class="space-y-4">
                     <input type="hidden" id="item-id">
-                    <div><label class="text-sm font-medium">Name</label><input type="text" id="item-name" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border" required></div>
-                    <div><label class="text-sm font-medium">Category</label><input type="text" id="item-category" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border" required></div>
-                    <div><label class="text-sm font-medium">Price</label><input type="number" id="item-price" step="0.01" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border" required></div>
-                    <div><label class="text-sm font-medium">Description</label><textarea id="item-description" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border" rows="2"></textarea></div>
-                    <div><label class="text-sm font-medium">Image URL (Emoji)</label><input type="text" id="item-image" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border"></div>
-                    <div class="flex items-center"><input type="checkbox" id="item-available" class="h-4 w-4 rounded border-gray-300"><label for="item-available" class="ml-2 text-sm font-medium">Is Available</label></div>
-                    <div class="flex justify-end space-x-2 pt-4"><button type="button" id="cancel-btn" class="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-sm">Cancel</button><button type="submit" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm">Save</button></div>
+                    <div>
+                        <label class="text-sm font-medium">Name</label>
+                        <input type="text" id="item-name" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border" required>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium">Category</label>
+                        <input type="text" id="item-category" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border" required>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium">Price</label>
+                        <input type="number" id="item-price" step="0.01" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border" required>
+                    </div>
+                     <div>
+                        <label class="text-sm font-medium">Description</label>
+                        <textarea id="item-description" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border" rows="2"></textarea>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium">Image URL (Emoji)</label>
+                        <input type="text" id="item-image" class="w-full mt-1 p-2 bg-secondary rounded-md border border-border">
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="item-available" class="h-4 w-4 rounded border-gray-300">
+                        <label for="item-available" class="ml-2 text-sm font-medium">Is Available</label>
+                    </div>
+                    <div class="flex justify-end space-x-2 pt-4">
+                        <button type="button" id="cancel-btn" class="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-sm">Cancel</button>
+                        <button type="submit" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm">Save</button>
+                    </div>
                 </form>
             </div>
-        </div>`;
+        </div>
+    `;
 
     const loadMenu = async () => {
-        const { data, error } = await supabase.from('products').select('*').order('category').order('name');
-        if (state.currentPage !== 'menu' || error) { if(error) showToast('Failed to load menu items.'); return; }
-        const tableBody = $('#menu-table-body');
-        if (tableBody) tableBody.innerHTML = `
-            <div class="grid grid-cols-6 gap-4 font-semibold text-sm text-muted-foreground px-4 py-2 border-b">
-                <div class="col-span-2">Name</div><div>Category</div><div>Price</div><div>Available</div><div>Actions</div>
-            </div>` + data.map(item => `
-            <div class="grid grid-cols-6 gap-4 items-center px-4 py-3 text-sm">
-                <div class="col-span-2 font-medium">${item.name}</div><div>${item.category}</div><div>₹${item.price}</div>
-                <div><span class="px-2 py-1 text-xs rounded-full ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${item.is_available ? 'Yes' : 'No'}</span></div>
-                <div class="space-x-2"><button class="edit-item-btn text-blue-600 hover:underline" data-id="${item.id}">Edit</button><button class="delete-item-btn text-red-600 hover:underline" data-id="${item.id}">Delete</button></div>
-            </div>`).join('');
+        const { data: products, error } = await supabase.from('products').select('*').order('category').order('name');
+        if (state.currentPage !== 'menu' || error) return;
+        const menuTableBody = $('#menu-table-body');
+        if (menuTableBody) {
+            menuTableBody.innerHTML = products.map(item => `
+                <div class="grid grid-cols-6 gap-4 items-center px-4 py-3 text-sm">
+                    <div class="col-span-2 font-medium">${item.name}</div>
+                    <div>${item.category}</div>
+                    <div>₹${item.price}</div>
+                    <div><span class="px-2 py-1 text-xs rounded-full ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${item.is_available ? 'Yes' : 'No'}</span></div>
+                    <div class="space-x-2">
+                        <button class="edit-item-btn text-blue-600 hover:underline" data-id="${item.id}">Edit</button>
+                        <button class="delete-item-btn text-red-600 hover:underline" data-id="${item.id}">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
     };
 
     const openModal = (item = null) => {
         $('#menu-modal').classList.remove('hidden');
         $('#modal-title').textContent = item ? 'Edit Menu Item' : 'Add Menu Item';
-        $('#item-id').value = item?.id || ''; $('#item-name').value = item?.name || ''; $('#item-category').value = item?.category || '';
-        $('#item-price').value = item?.price || ''; $('#item-description').value = item?.description || ''; $('#item-image').value = item?.image_url || '';
+        $('#item-id').value = item?.id || '';
+        $('#item-name').value = item?.name || '';
+        $('#item-category').value = item?.category || '';
+        $('#item-price').value = item?.price || '';
+        $('#item-description').value = item?.description || '';
+        $('#item-image').value = item?.image_url || '';
         $('#item-available').checked = item ? item.is_available : true;
     };
-    const closeModal = () => $('#menu-modal').classList.add('hidden');
 
-    await loadMenu();
+    const closeModal = () => $('#menu-modal').classList.add('hidden');
 
     $('#add-item-btn').addEventListener('click', () => openModal());
     $('#cancel-btn').addEventListener('click', closeModal);
+
     $('#menu-item-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const id = $('#item-id').value;
-        const itemData = { name: $('#item-name').value, category: $('#item-category').value, price: parseFloat($('#item-price').value), description: $('#item-description').value, image_url: $('#item-image').value, is_available: $('#item-available').checked };
-        const { error } = id ? await supabase.from('products').update(itemData).eq('id', id) : await supabase.from('products').insert([itemData]);
-        if (error) showToast(`Error: ${error.message}`);
-        else { showToast(`Item ${id ? 'updated' : 'added'}.`); closeModal(); await loadMenu(); }
+        const itemData = {
+            name: $('#item-name').value, category: $('#item-category').value, price: parseFloat($('#item-price').value),
+            description: $('#item-description').value, image_url: $('#item-image').value, is_available: $('#item-available').checked
+        };
+        
+        let response;
+        if (id) {
+            response = await supabase.from('products').update(itemData).eq('id', id);
+        } else {
+            response = await supabase.from('products').insert([itemData]);
+        }
+        
+        if (response.error) {
+            showToast(`Error: ${response.error.message}`);
+        } else {
+            showToast(`Item ${id ? 'updated' : 'added'}.`);
+            closeModal();
+        }
     });
+    
     container.addEventListener('click', async (e) => {
         if (e.target.classList.contains('edit-item-btn')) {
             const { data } = await supabase.from('products').select('*').eq('id', e.target.dataset.id).single();
@@ -477,80 +604,113 @@ async function renderMenu(container) {
         if (e.target.classList.contains('delete-item-btn')) {
             if (confirm('Are you sure?')) {
                 const { error } = await supabase.from('products').delete().eq('id', e.target.dataset.id);
-                if (error) showToast(`Error: ${error.message}`); else { showToast('Item deleted.'); await loadMenu(); }
+                if (error) showToast(`Error: ${error.message}`); else showToast('Item deleted.');
             }
         }
     });
+
+    supabase.channel('public:products').on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, loadMenu).subscribe();
+    await loadMenu();
 }
 
+
+// --- ORDER HISTORY ---
 async function renderOrders(container) {
     container.innerHTML = `
         <div class="bg-card p-4 rounded-lg shadow-sm">
-            <div id="orders-table-body" class="divide-y divide-border"></div>
-        </div>
-        <div id="order-detail-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"></div>`;
-    const loadOrders = async () => {
-        const { data, error } = await supabase.from('orders').select('*, customers(name), tables(table_number)').order('created_at', { ascending: false });
-        if (state.currentPage !== 'orders' || error) { if(error) showToast('Failed to load orders.'); return; }
-        const tableBody = $('#orders-table-body');
-        if (tableBody) tableBody.innerHTML = `
             <div class="grid grid-cols-6 gap-4 font-semibold text-sm text-muted-foreground px-4 py-2 border-b">
                 <div>Order ID</div><div>Customer</div><div>Table</div><div>Total</div><div>Status</div><div>Actions</div>
-            </div>` + data.map(order => `
-            <div class="grid grid-cols-6 gap-4 items-center px-4 py-3 text-sm">
-                <div class="font-mono text-xs">${order.id.slice(0, 8)}...</div><div>${order.customers?.name || 'N/A'}</div><div>#${order.tables?.table_number || 'N/A'}</div>
-                <div class="font-semibold">₹${order.total_amount.toFixed(2)}</div>
-                <div><select class="status-select bg-secondary border-border rounded-md p-1 text-xs" data-id="${order.id}">
-                    <option value="received" ${order.status === 'received' ? 'selected' : ''}>Received</option><option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
-                    <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option><option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
-                </select></div>
-                <div><button class="view-order-btn text-blue-600 hover:underline" data-id="${order.id}">View</button></div>
-            </div>`).join('');
+            </div>
+            <div id="orders-table-body" class="divide-y divide-border"></div>
+        </div>
+        <div id="order-detail-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"></div>
+    `;
+
+    const loadOrders = async () => {
+        const { data, error } = await supabase.from('orders').select('*, customers(name), tables(table_number)').order('created_at', { ascending: false });
+        if (state.currentPage !== 'orders' || error) return;
+        const ordersTableBody = $('#orders-table-body');
+        if (ordersTableBody) {
+            ordersTableBody.innerHTML = data.map(order => `
+                <div class="grid grid-cols-6 gap-4 items-center px-4 py-3 text-sm">
+                    <div class="font-mono text-xs">${order.id.slice(0, 8)}...</div>
+                    <div>${order.customers?.name || 'N/A'}</div>
+                    <div>#${order.tables?.table_number || 'N/A'}</div>
+                    <div class="font-semibold">₹${order.total_amount.toFixed(2)}</div>
+                    <div>
+                        <select class="status-select bg-secondary border-border rounded-md p-1 text-xs" data-id="${order.id}">
+                            <option value="received" ${order.status === 'received' ? 'selected' : ''}>Received</option>
+                            <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
+                            <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                            <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div><button class="view-order-btn text-blue-600 hover:underline" data-id="${order.id}">View</button></div>
+                </div>`).join('');
+        }
     };
-    await loadOrders();
+    
     container.addEventListener('change', async (e) => {
         if (e.target.classList.contains('status-select')) {
             const { error } = await supabase.from('orders').update({ status: e.target.value }).eq('id', e.target.dataset.id);
             if (error) showToast(`Error: ${error.message}`); else showToast('Order status updated.');
         }
     });
+
     container.addEventListener('click', async (e) => {
         if (e.target.classList.contains('view-order-btn')) {
             const { data: order, error } = await supabase.from('orders').select('*, customers(name), tables(table_number), order_items(*, products(name))').eq('id', e.target.dataset.id).single();
-            if(error) { showToast('Could not fetch order details'); return; }
+            if (error) { showToast('Could not fetch order details'); return; }
             const modal = $('#order-detail-modal');
             modal.innerHTML = `
-                <div class="bg-card rounded-lg shadow-xl p-6 w-full max-w-lg relative"><button onclick="$('#order-detail-modal').classList.add('hidden')" class="absolute top-4 right-4 text-muted-foreground">&times;</button>
+                <div class="bg-card rounded-lg shadow-xl p-6 w-full max-w-lg relative">
+                    <button onclick="$('#order-detail-modal').classList.add('hidden')" class="absolute top-4 right-4 text-muted-foreground">&times;</button>
                     <h3 class="text-lg font-semibold mb-4">Order Details (${order.id.slice(0, 8)})</h3>
-                    <div class="text-sm space-y-2 mb-4"><p><strong>Customer:</strong> ${order.customers?.name || 'N/A'}</p><p><strong>Table:</strong> #${order.tables?.table_number || 'N/A'}</p><p><strong>Instructions:</strong> ${order.special_instructions || 'None'}</p></div>
+                    <div class="text-sm space-y-2 mb-4">
+                        <p><strong>Customer:</strong> ${order.customers?.name || 'N/A'}</p>
+                        <p><strong>Table:</strong> #${order.tables?.table_number || 'N/A'}</p>
+                        <p><strong>Instructions:</strong> ${order.special_instructions || 'None'}</p>
+                    </div>
                     <div class="border rounded-lg">
-                        ${order.order_items.map(item => `<div class="flex justify-between p-2 border-b"><p>${item.quantity} x ${item.products?.name || '[? Product]'}</p><p>₹${(item.price_at_time_of_order * item.quantity).toFixed(2)}</p></div>`).join('')}
+                        ${order.order_items.map(item => `<div class="flex justify-between p-2 border-b"><p>${item.quantity} x ${item.products?.name || '[?]'}</p><p>₹${(item.price_at_time_of_order * item.quantity).toFixed(2)}</p></div>`).join('')}
                         <div class="flex justify-between p-2 font-bold"><p>Total</p><p>₹${order.total_amount.toFixed(2)}</p></div>
                     </div>
                 </div>`;
             modal.classList.remove('hidden');
         }
     });
+
+    supabase.channel('public:orders_history').on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, loadOrders).subscribe();
+    await loadOrders();
 }
 
+// --- CUSTOMERS ---
 async function renderCustomers(container) {
-    container.innerHTML = `
-        <div class="bg-card p-4 rounded-lg shadow-sm">
-            <div id="customers-table-body" class="divide-y divide-border"></div>
-        </div>`;
-    const { data, error } = await supabase.from('customers').select('*');
-    if (state.currentPage !== 'customers' || error) { if(error) showToast('Failed to load customers.'); return; }
-    const tableBody = $('#customers-table-body');
-    if (tableBody) tableBody.innerHTML = `
+    container.innerHTML = `<div class="bg-card p-4 rounded-lg shadow-sm">
         <div class="grid grid-cols-4 gap-4 font-semibold text-sm text-muted-foreground px-4 py-2 border-b">
             <div>Name</div><div>Joined</div><div>Phone</div><div>ID</div>
-        </div>` + data.map(customer => `
-        <div class="grid grid-cols-4 gap-4 items-center px-4 py-3 text-sm">
-            <div class="font-medium">${customer.name}</div><div>${new Date(customer.created_at).toLocaleDateString()}</div>
-            <div>${customer.whatsapp_number || 'N/A'}</div><div class="font-mono text-xs">${customer.id}</div>
-        </div>`).join('');
+        </div><div id="customers-table-body" class="divide-y divide-border"></div></div>`;
+    
+    const loadCustomers = async () => {
+        const { data, error } = await supabase.from('customers').select('*');
+        if (state.currentPage !== 'customers' || error) return;
+        const customersTableBody = $('#customers-table-body');
+        if (customersTableBody) {
+            customersTableBody.innerHTML = data.map(c => `
+                <div class="grid grid-cols-4 gap-4 items-center px-4 py-3 text-sm">
+                    <div class="font-medium">${c.name}</div>
+                    <div>${new Date(c.created_at).toLocaleDateString()}</div>
+                    <div>${c.whatsapp_number || 'N/A'}</div>
+                    <div class="font-mono text-xs">${c.id}</div>
+                </div>`).join('');
+        }
+    };
+
+    supabase.channel('public:customers').on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, loadCustomers).subscribe();
+    await loadCustomers();
 }
 
+// --- QR CODE GENERATOR ---
 function renderQrGenerator(container) {
     container.innerHTML = `
         <div class="max-w-md mx-auto bg-card p-8 rounded-lg shadow-sm">
@@ -560,29 +720,36 @@ function renderQrGenerator(container) {
                 <button id="generate-qr-btn" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium">Generate</button>
             </div>
             <div id="qrcode-container" class="mt-6 flex flex-col items-center justify-center bg-secondary p-4 rounded-lg hidden">
-                <h4 id="qr-title" class="font-semibold mb-2"></h4><div id="qrcode" class="bg-white p-4 rounded-md"></div>
-                <button id="print-qr-btn" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg text-sm">Print QR Code</button>
+                <h4 id="qr-title" class="font-semibold mb-2"></h4>
+                <div id="qrcode" class="bg-white p-4 rounded-md"></div>
+                 <button id="print-qr-btn" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded-lg text-sm">Print QR Code</button>
             </div>
         </div>`;
+
     $('#generate-qr-btn').addEventListener('click', () => {
         const tableNumber = $('#table-number-input').value;
         if (!tableNumber) { showToast('Please enter a table number.'); return; }
-        const url = `https://hxouseco.netlify.app/?table=${tableNumber}`;
+        const url = `https://hxousee.netlify.app/?table=${tableNumber}`; // UPDATE THIS URL IF NEEDED
         const qrcodeContainer = $('#qrcode');
         qrcodeContainer.innerHTML = '';
-        const qr = qrcode(0, 'L'); qr.addData(url); qr.make();
+        const qr = qrcode(0, 'L');
+        qr.addData(url);
+        qr.make();
         qrcodeContainer.innerHTML = qr.createImgTag(6, 8);
         $('#qr-title').textContent = `QR Code for Table #${tableNumber}`;
         $('#qrcode-container').classList.remove('hidden');
     });
+
     $('#print-qr-btn').addEventListener('click', () => {
         const qrContent = $('#qrcode-container').innerHTML;
         const printWindow = window.open('', '', 'height=600,width=800');
-        printWindow.document.write(`<html><head><title>Print QR Code</title><style>body { font-family: sans-serif; text-align: center; margin-top: 50px; }</style></head><body>${qrContent}</body></html>`);
-        printWindow.document.close(); printWindow.print();
+        printWindow.document.write(`<html><head><title>Print QR</title><style>body { font-family: sans-serif; text-align: center; margin-top: 50px; }</style></head><body>${qrContent}</body></html>`);
+        printWindow.document.close();
+        printWindow.print();
     });
 }
 
+// --- SETTINGS ---
 async function renderSettings(container) {
     container.innerHTML = `
         <div class="max-w-2xl mx-auto bg-card p-8 rounded-lg shadow-sm">
@@ -593,23 +760,31 @@ async function renderSettings(container) {
                 <div class="flex justify-end pt-4"><button type="submit" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg font-medium">Save Settings</button></div>
             </form>
         </div>`;
+    
     const { data, error } = await supabase.from('app_settings').select('*');
-    if (state.currentPage !== 'settings' || error) { if(error) showToast('Failed to load settings.'); return; }
+    if (state.currentPage !== 'settings' || error) return;
+    
     data.forEach(setting => {
-        const input = $(`#setting-${setting.key.replace(/_/g, '-')}`);
-        if (input) input.value = setting.value;
+        const inputId = `#setting-${setting.key.replace(/_/g, '-')}`;
+        const inputElement = $(inputId);
+        if (inputElement) {
+            inputElement.value = setting.value;
+        }
     });
+
     $('#settings-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const settingsToUpdate = [{ key: 'welcome_title', value: $('#setting-welcome-title').value }, { key: 'welcome_subtitle', value: $('#setting-welcome-subtitle').value }];
-        const { error } = await supabase.from('app_settings').upsert(settingsToUpdate);
+        const settings = [ { key: 'welcome_title', value: $('#setting-welcome-title').value }, { key: 'welcome_subtitle', value: $('#setting-welcome-subtitle').value }];
+        const { error } = await supabase.from('app_settings').upsert(settings);
         if (error) showToast(`Error: ${error.message}`); else showToast('Settings saved.');
     });
 }
 
+
 // =================================================================================
 //  SECTION 4: THEME & INITIALIZATION
 // =================================================================================
+
 function applyTheme(theme) {
     const isDark = theme === 'dark';
     document.documentElement.classList.toggle('dark', isDark);
@@ -617,44 +792,127 @@ function applyTheme(theme) {
     $('#theme-icon-dark').classList.toggle('hidden', !isDark);
     $('#theme-icon-light').classList.toggle('hidden', isDark);
     localStorage.setItem('theme', theme);
-    if (state.currentPage === 'analytics' && state.chartInstance) {
-        renderAnalytics($('#page-content')); // Re-render chart with new theme colors
+    if(state.currentPage === 'dashboard' && state.chartInstance) {
+        // Redraw chart with new theme colors
+        loadDashboardData();
+    }
+}
+
+async function cacheData() {
+    const { data: customers } = await supabase.from('customers').select('id, name');
+    if (customers) state.customersCache = customers.reduce((acc, c) => ({...acc, [c.id]: c.name}), {});
+
+    const { data: tables } = await supabase.from('tables').select('id, table_number');
+    if (tables) state.tablesCache = tables.reduce((acc, t) => ({...acc, [t.id]: t.table_number}), {});
+}
+
+async function handleNewOrder(payload) {
+    const { data: newOrder, error } = await supabase.from('orders').select('*, order_items(*, products(name)), customers(name), tables(table_number)').eq('id', payload.new.id).single();
+    if (error || !newOrder) { console.error("Error fetching new order details", error); return; }
+
+    if (state.audioInitialized) {
+        const modal = $('#alert-modal');
+        modal.innerHTML = `
+            <div class="bg-card p-6 rounded-lg shadow-2xl w-full max-w-md text-left">
+                <h2 class="text-2xl font-bold text-destructive mb-2">New Order Received!</h2>
+                <p class="text-sm text-muted-foreground mb-4">For ${newOrder.customers?.name} at Table #${newOrder.tables?.table_number}</p>
+                <div class="max-h-60 overflow-y-auto border rounded-lg p-3 bg-secondary">
+                    ${newOrder.order_items.map(item => `<div class="flex justify-between text-sm py-1"><span>${item.quantity} x ${item.products?.name || '[Deleted Product]'}</span><span>₹${(item.price_at_time_of_order * item.quantity).toFixed(2)}</span></div>`).join('')}
+                    <div class="flex justify-between p-2 font-bold border-t mt-2"><p>Total</p><p>₹${newOrder.total_amount.toFixed(2)}</p></div>
+                </div>
+                ${newOrder.special_instructions ? `<p class="text-sm mt-4 text-red-600 font-semibold">Instructions: ${newOrder.special_instructions}</p>` : ''}
+                <button id="dismiss-alert-btn" class="w-full mt-6 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-bold">Acknowledge & Close</button>
+            </div>`;
+        $('#dismiss-alert-btn').addEventListener('click', () => { stopAlarm(); modal.classList.add('hidden'); });
+        modal.classList.remove('hidden');
+        startAlarm();
+    } else {
+        showToast("New Order Received! (Audio muted)");
+    }
+
+    if (state.currentPage === 'dashboard') {
+        const container = $('#live-orders-container');
+        const placeholder = container.querySelector('p');
+        if (placeholder) placeholder.remove();
+        container.insertAdjacentHTML('beforeend', createOrderCardHTML(newOrder));
+    }
+}
+
+async function handleNewStaffCall(payload) {
+    const { data: newCall, error } = await supabase.from('staff_calls').select('*, tables(table_number)').eq('id', payload.new.id).single();
+    if (error || !newCall) { console.error("Error fetching new staff call", error); return; }
+
+    if (state.audioInitialized) {
+         const modal = $('#alert-modal');
+        modal.innerHTML = `
+            <div class="bg-card p-6 rounded-lg shadow-2xl w-full max-w-md text-left">
+                <h2 class="text-2xl font-bold text-orange-500 mb-2">Staff Called!</h2>
+                <p class="text-lg text-muted-foreground mb-4">A customer at <strong>Table #${newCall.tables?.table_number || 'N/A'}</strong> requires assistance.</p>
+                <button id="dismiss-alert-btn" class="w-full mt-6 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-bold">Acknowledge & Close</button>
+            </div>`;
+        $('#dismiss-alert-btn').addEventListener('click', () => { stopAlarm(); modal.classList.add('hidden'); });
+        modal.classList.remove('hidden');
+        startAlarm();
+    } else {
+        showToast(`Staff called to Table #${newCall.tables?.table_number || 'N/A'}! (Audio muted)`);
+    }
+
+    if (state.currentPage === 'dashboard') {
+        const container = $('#staff-calls-container');
+        const placeholder = container.querySelector('p');
+        if (placeholder) placeholder.remove();
+        container.insertAdjacentHTML('beforeend', createStaffCallCardHTML(newCall));
+    }
+}
+
+function handleUpdate(payload, cardIdPrefix, containerSelector) {
+     if (state.currentPage === 'dashboard') {
+        const card = $(`#${cardIdPrefix}-${payload.new.id}`);
+        if (card) {
+            card.classList.add('fade-out');
+            card.addEventListener('animationend', () => {
+                card.remove();
+                const container = $(containerSelector);
+                if (container && container.children.length === 0) {
+                   if (cardIdPrefix.includes('order')) {
+                       loadLiveOrders();
+                   } else if (cardIdPrefix.includes('call')) {
+                       loadPendingStaffCalls();
+                   }
+                }
+            });
+        }
     }
 }
 
 async function initializeApp() {
     $('#login-screen').classList.add('hidden');
     $('#app-container').classList.remove('hidden');
-    $('#user-email').textContent = state.user.email;
+    if (state.user) {
+        $('#user-email').textContent = state.user.email;
+    }
+    await cacheData();
     applyTheme(localStorage.getItem('theme') || 'light');
     
-    $('#theme-toggle').addEventListener('click', () => applyTheme(localStorage.getItem('theme') === 'dark' ? 'light' : 'dark'));
-    $('#logout-btn').addEventListener('click', async () => { await supabase.auth.signOut(); window.location.reload(); });
-    document.body.addEventListener('click', initializeAudio, { once: true });
+    $('#theme-toggle').addEventListener('click', () => {
+        const currentTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+        applyTheme(currentTheme);
+    });
+
+    $('#logout-btn').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.reload();
+    });
     
-    supabase.channel('public:orders')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, async (payload) => {
-            if (payload.eventType === 'INSERT') {
-                const { data: newOrder, error } = await supabase.from('orders').select('*, order_items(*, products(name)), customers(name), tables(table_number)').eq('id', payload.new.id).single();
-                if (error) return;
-                
-                const alertModal = $('#order-alert');
-                const itemsHTML = newOrder.order_items.map(item => `<div class="flex justify-between text-sm py-1"><span>${item.quantity} x ${item.products?.name || '[? Product]'}</span><span>₹${(item.price_at_time_of_order * item.quantity).toFixed(2)}</span></div>`).join('');
-                alertModal.innerHTML = `
-                    <div class="bg-card p-6 rounded-lg shadow-2xl w-full max-w-md text-left">
-                        <h2 class="text-2xl font-bold text-destructive mb-2">New Order Received!</h2>
-                        <p class="text-sm text-muted-foreground mb-4">For ${newOrder.customers?.name || 'N/A'} at Table #${newOrder.tables?.table_number || 'N/A'}</p>
-                        <div class="max-h-60 overflow-y-auto border rounded-lg p-3 bg-secondary">${itemsHTML}<div class="flex justify-between p-2 font-bold border-t mt-2"><p>Total</p><p>₹${newOrder.total_amount.toFixed(2)}</p></div></div>
-                        ${newOrder.special_instructions ? `<p class="text-sm mt-4 text-red-600 font-semibold">Instructions: ${newOrder.special_instructions}</p>` : ''}
-                        <button id="dismiss-alert-btn" class="w-full mt-6 bg-primary text-primary-foreground px-6 py-3 rounded-lg font-bold">Acknowledge & Close</button>
-                    </div>`;
-                $('#dismiss-alert-btn').addEventListener('click', () => { stopOrderAlarm(); alertModal.classList.add('hidden'); });
-                
-                if(state.audioInitialized) { startOrderAlarm(); alertModal.classList.remove('hidden'); } 
-                else { showToast("New Order! (Audio not enabled)"); }
-            }
-            if (state.currentPage === 'dashboard') await loadLiveOrders();
-            if (state.currentPage === 'orders') await renderOrders($('#page-content'));
+    supabase.channel('public-realtime')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, handleNewOrder)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, payload => {
+            if (payload.new.status !== 'received') handleUpdate(payload, 'order-card', '#live-orders-container');
+            if (state.currentPage === 'orders') PAGES.orders.render($('#page-content'));
+        })
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'staff_calls' }, handleNewStaffCall)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'staff_calls' }, payload => {
+            if (payload.new.status !== 'pending') handleUpdate(payload, 'call-card', '#staff-calls-container');
         })
         .subscribe();
 
@@ -664,16 +922,34 @@ async function initializeApp() {
 document.addEventListener('DOMContentLoaded', async () => {
     $('#login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const email = $('#email').value;
+        const password = $('#password').value;
+        const errorEl = $('#login-error');
         const button = e.target.querySelector('button');
-        button.disabled = true; button.textContent = "Signing In...";
-        const { data, error } = await supabase.auth.signInWithPassword({ email: $('#email').value, password: $('#password').value });
-        if (error) { $('#login-error').textContent = error.message; button.disabled = false; button.textContent = "Sign In"; } 
-        else { state.user = data.user; await initializeApp(); }
+        
+        button.disabled = true;
+        button.textContent = "Signing In...";
+        
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        
+        if (error) {
+            errorEl.textContent = error.message;
+            button.disabled = false;
+            button.textContent = "Sign In";
+        } else if (data.user) {
+            errorEl.textContent = '';
+            state.user = data.user;
+            await initializeApp();
+        }
     });
 
     const { data: { session } } = await supabase.auth.getSession();
-    if (session) { state.user = session.user; await initializeApp(); } 
-    else { $('#login-screen').classList.remove('hidden'); }
+    if (session) {
+        state.user = session.user;
+        await initializeApp();
+    } else {
+        $('#login-screen').classList.remove('hidden');
+    }
 });
 </script>
 </body>
