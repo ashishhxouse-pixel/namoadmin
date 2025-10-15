@@ -491,9 +491,7 @@ async function renderMenu(container) {
             <h3 class="text-lg font-semibold">Menu Items</h3>
             <button id="add-item-btn" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium">Add New Item</button>
         </div>
-        <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
-            <div id="menu-table-body"></div>
-        </div>
+        <div id="menu-items-container" class="space-y-6"></div>
         <div id="menu-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div class="bg-card rounded-lg shadow-xl p-6 w-full max-w-md">
                 <h3 id="modal-title" class="text-lg font-semibold mb-4">Add Menu Item</h3>
@@ -536,41 +534,41 @@ async function renderMenu(container) {
         const { data: products, error } = await supabase.from('products').select('*').order('category').order('name');
         
         if (state.currentPage !== 'menu') return;
-        const tableBody = $('#menu-table-body');
+        const menuContainer = $('#menu-items-container');
 
         if (error) {
             showToast(`Failed to load menu: ${error.message}`, true);
-            tableBody.innerHTML = `<p class="text-center text-destructive p-4">Error: ${error.message}</p>`;
+            menuContainer.innerHTML = `<p class="text-center text-destructive p-4">Error: ${error.message}</p>`;
             return;
         }
 
-        tableBody.innerHTML = `
-            <table class="w-full text-sm text-left">
-                <thead class="bg-secondary">
-                    <tr>
-                        <th class="p-4 font-semibold">Name</th>
-                        <th class="p-4 font-semibold">Category</th>
-                        <th class="p-4 font-semibold">Price</th>
-                        <th class="p-4 font-semibold">Available</th>
-                        <th class="p-4 font-semibold">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${products.map(item => `
-                        <tr class="border-b border-border">
-                            <td class="p-4 font-medium">${item.image_url || ''} ${item.name}</td>
-                            <td class="p-4 text-muted-foreground">${item.category}</td>
-                            <td class="p-4 text-muted-foreground">₹${item.price}</td>
-                            <td class="p-4"><span class="px-2 py-1 text-xs rounded-full ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${item.is_available ? 'Yes' : 'No'}</span></td>
-                            <td class="p-4 space-x-2">
-                                <button class="edit-item-btn text-blue-600 hover:underline" data-id="${item.id}">Edit</button>
-                                <button class="delete-item-btn text-red-600 hover:underline" data-id="${item.id}">Delete</button>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
+        const groupedByCategory = products.reduce((acc, product) => {
+            const category = product.category || 'Uncategorized';
+            if (!acc[category]) {
+                acc[category] = [];
+            }
+            acc[category].push(product);
+            return acc;
+        }, {});
+
+        menuContainer.innerHTML = Object.keys(groupedByCategory).map(category => `
+            <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
+                <h4 class="text-md font-semibold p-4 bg-secondary border-b border-border">${category}</h4>
+                <div class="divide-y divide-border">
+                ${groupedByCategory[category].map(item => `
+                    <div class="grid grid-cols-5 gap-4 items-center p-4 text-sm">
+                        <div class="font-medium col-span-2">${item.image_url || ''} ${item.name}</div>
+                        <div class="text-muted-foreground">₹${item.price}</div>
+                        <div><span class="px-2 py-1 text-xs rounded-full ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${item.is_available ? 'Yes' : 'No'}</span></div>
+                        <div class="space-x-2">
+                            <button class="edit-item-btn text-blue-600 hover:underline" data-id="${item.id}">Edit</button>
+                            <button class="delete-item-btn text-red-600 hover:underline" data-id="${item.id}">Delete</button>
+                        </div>
+                    </div>
+                `).join('')}
+                </div>
+            </div>
+        `).join('');
     };
 
     const openModal = (item = null) => {
@@ -879,6 +877,7 @@ async function renderFeedback(container) {
         if (!tableBody) return;
 
         if (error) {
+            console.error("Feedback loading error:", error);
             tableBody.innerHTML = `<p class="text-destructive p-4 text-center">Error: ${error.message}</p>`;
             return;
         }
@@ -1020,7 +1019,7 @@ function renderQrCodes(container) {
             return;
         }
         
-        const url = `https://namo-tandoori-chai.onrender.com/?table=${tableNumber}`;
+        const url = `https://namo-lyrh.onrender.com/?table=${tableNumber}`;
         const qrcodeContainer = $('#qrcode');
         qrcodeContainer.innerHTML = '';
         
@@ -1431,6 +1430,8 @@ async function initializeApp() {
     supabase.channel('public-changes')
         .on('postgres_changes', { event: '*', schema: 'public' }, async (payload) => {
             console.log('Realtime Event:', payload);
+            playAlarm();
+            showToast(`Update received for ${payload.table}...`);
 
             // Live dashboard updates
             if (state.currentPage === 'dashboard') {
@@ -1445,9 +1446,9 @@ async function initializeApp() {
             if (state.currentPage === 'staff_calls' && payload.table === 'staff_calls') renderStaffCalls($('#page-content'));
             if (state.currentPage === 'customers' && payload.table === 'customers') renderCustomers($('#page-content'));
             if (state.currentPage === 'feedback' && payload.table === 'feedback') renderFeedback($('#page-content'));
-            if (state.currentPage === 'analytics') renderAllCharts();
+            if (state.currentPage === 'analytics' && (payload.table === 'orders' || payload.table === 'order_items')) renderAllCharts();
 
-            // Real-time notifications for new inserts
+            // Real-time pop-up notifications for new inserts
             if (payload.eventType === 'INSERT') {
                 if (payload.table === 'orders') {
                     const { data } = await supabase.from('tables').select('table_number').eq('id', payload.new.table_id).single();
@@ -1464,6 +1465,9 @@ async function initializeApp() {
                         <p class="text-lg text-muted-foreground mb-6">From Table #${data?.table_number || 'N/A'}</p>
                         <button onclick="hideAlert()" class="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-bold">Acknowledge</button>
                     `);
+                }
+                 if (payload.table === 'feedback') {
+                    showToast('New customer feedback received!');
                 }
             }
         })
@@ -1506,3 +1510,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 </script>
 </body>
 </html>
+
