@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -489,9 +490,15 @@ async function renderMenu(container) {
     container.innerHTML = `
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-semibold">Menu Items</h3>
-            <button id="add-item-btn" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium">Add New Item</button>
+            <div class="flex space-x-2">
+                <button id="import-pdf-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Import from PDF</button>
+                <button id="add-item-btn" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium">Add New Item</button>
+            </div>
         </div>
+        <input type="file" id="pdf-upload-input" class="hidden" accept="application/pdf">
         <div id="menu-items-container" class="space-y-6"></div>
+        
+        <!-- Add/Edit Item Modal -->
         <div id="menu-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div class="bg-card rounded-lg shadow-xl p-6 w-full max-w-md">
                 <h3 id="modal-title" class="text-lg font-semibold mb-4">Add Menu Item</h3>
@@ -528,6 +535,20 @@ async function renderMenu(container) {
                 </form>
             </div>
         </div>
+
+        <!-- PDF Import Modal -->
+        <div id="pdf-import-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div class="bg-card rounded-lg shadow-xl p-6 w-full max-w-2xl">
+                <h3 class="text-lg font-semibold mb-4">Import Menu from PDF</h3>
+                <div id="pdf-import-content" class="max-h-96 overflow-y-auto">
+                    <!-- Content will be dynamically populated -->
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button type="button" id="cancel-pdf-import-btn" class="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-sm">Cancel</button>
+                    <button type="button" id="add-selected-items-btn" class="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm hidden">Add Selected Items</button>
+                </div>
+            </div>
+        </div>
     `;
 
     const loadMenu = async () => {
@@ -551,7 +572,7 @@ async function renderMenu(container) {
             return acc;
         }, {});
 
-        menuContainer.innerHTML = Object.keys(groupedByCategory).map(category => `
+        menuContainer.innerHTML = Object.keys(groupedByCategory).sort().map(category => `
             <div class="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
                 <h4 class="text-md font-semibold p-4 bg-secondary border-b border-border">${category}</h4>
                 <div class="divide-y divide-border">
@@ -589,6 +610,51 @@ async function renderMenu(container) {
 
     $('#add-item-btn').addEventListener('click', () => openModal());
     $('#cancel-btn').addEventListener('click', closeModal);
+    
+    $('#import-pdf-btn').addEventListener('click', () => $('#pdf-upload-input').click());
+    $('#pdf-upload-input').addEventListener('change', handlePdfUpload);
+    $('#cancel-pdf-import-btn').addEventListener('click', () => {
+        $('#pdf-import-modal').classList.add('hidden');
+        $('#pdf-upload-input').value = ''; 
+    });
+    
+    $('#add-selected-items-btn').addEventListener('click', async () => {
+        const btn = $('#add-selected-items-btn');
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+
+        const selectedItems = [];
+        $$('#pdf-import-content input[type="checkbox"]:checked').forEach(checkbox => {
+            selectedItems.push({
+                name: checkbox.dataset.name,
+                price: parseFloat(checkbox.dataset.price),
+                category: 'Imported from PDF',
+                is_available: true,
+            });
+        });
+
+        if (selectedItems.length === 0) {
+            showToast('No items selected.', true);
+            btn.disabled = false;
+            btn.textContent = 'Add Selected Items';
+            return;
+        }
+
+        const { error } = await supabase.from('products').insert(selectedItems);
+
+        if (error) {
+            showToast(`Error adding items: ${error.message}`, true);
+        } else {
+            showToast(`${selectedItems.length} items added successfully.`);
+            $('#pdf-import-modal').classList.add('hidden');
+            $('#pdf-upload-input').value = '';
+            loadMenu();
+        }
+
+        btn.disabled = false;
+        btn.textContent = 'Add Selected Items';
+    });
+
 
     $('#menu-item-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -860,66 +926,6 @@ async function renderAnalytics(container) {
     renderAllCharts();
 }
 
-async function renderFeedback(container) {
-    container.innerHTML = `
-        <div class="bg-card p-4 rounded-lg shadow-sm border border-border">
-            <div id="feedback-table-body" class="divide-y divide-border"></div>
-        </div>
-    `;
-
-    const loadFeedback = async () => {
-        const { data, error } = await supabase
-            .from('feedback')
-            .select('*, customers(name)')
-            .order('created_at', { ascending: false });
-
-        const tableBody = $('#feedback-table-body');
-        if (!tableBody) return;
-
-        if (error) {
-            console.error("Feedback loading error:", error);
-            tableBody.innerHTML = `<p class="text-destructive p-4 text-center">Error: ${error.message}</p>`;
-            return;
-        }
-
-        const ratingToStars = (rating) => '★'.repeat(rating) + '☆'.repeat(5 - rating);
-
-        tableBody.innerHTML = data.length === 0
-            ? `<p class="text-muted-foreground p-4 text-center">No feedback has been submitted yet.</p>`
-            : data.map(item => `
-                <div class="p-4">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <p class="font-semibold">${item.customers?.name || 'Anonymous'}</p>
-                            <p class="text-sm text-yellow-500">${ratingToStars(item.rating)}</p>
-                        </div>
-                        <button class="delete-feedback-btn text-red-500 hover:underline text-xs" data-id="${item.id}">Delete</button>
-                    </div>
-                    <p class="text-sm text-muted-foreground mt-2">${item.content || 'No comment'}</p>
-                    <p class="text-xs text-muted-foreground mt-2">${new Date(item.created_at).toLocaleString()}</p>
-                </div>
-            `).join('');
-    };
-
-    await loadFeedback();
-
-    container.addEventListener('click', async (e) => {
-        if (e.target.classList.contains('delete-feedback-btn')) {
-            const id = e.target.dataset.id;
-            const confirmed = await showConfirmation('Delete Feedback?', 'Are you sure you want to delete this feedback entry?');
-            if (confirmed) {
-                const { error } = await supabase.from('feedback').delete().eq('id', id);
-                if (error) {
-                    showToast(`Error: ${error.message}`, true);
-                } else {
-                    showToast('Feedback deleted.');
-                    loadFeedback();
-                }
-            }
-        }
-    });
-}
-
 
 async function renderReports(container) {
     container.innerHTML = `
@@ -1113,6 +1119,94 @@ async function renderSettings(container) {
 }
 
 // =================================================================================
+//  SECTION: PDF PARSING LOGIC
+// =================================================================================
+
+async function handlePdfUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const modal = $('#pdf-import-modal');
+    const content = $('#pdf-import-content');
+    const addBtn = $('#add-selected-items-btn');
+    
+    modal.classList.remove('hidden');
+    addBtn.classList.add('hidden');
+    content.innerHTML = `<div class="text-center p-8"><p class="text-muted-foreground">Parsing PDF, please wait...</p></div>`;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const typedarray = new Uint8Array(e.target.result);
+        
+        try {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js`;
+            
+            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+            let fullText = '';
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                fullText += textContent.items.map(item => item.str).join(' ') + '\n';
+            }
+            
+            const menuItems = parseMenuText(fullText);
+            
+            if (menuItems.length > 0) {
+                displayParsedItems(menuItems);
+                addBtn.classList.remove('hidden');
+            } else {
+                content.innerHTML = `<div class="text-center p-8"><p class="text-destructive">Could not find any menu items in the PDF. Please ensure it's a text-based PDF with clear item names and prices.</p></div>`;
+            }
+
+        } catch (error) {
+            console.error('Error parsing PDF:', error);
+            content.innerHTML = `<div class="text-center p-8"><p class="text-destructive">Failed to parse PDF. The file might be corrupted or in an unsupported format.</p></div>`;
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function parseMenuText(text) {
+    const items = [];
+    const lines = text.split('\n');
+    const menuItemRegex = /^(.*?)(?:\s*\.|\s){2,}\s*(\d+(\.\d{1,2})?)$/;
+
+    for (const line of lines) {
+        const trimmedLine = line.trim();
+        const match = trimmedLine.match(menuItemRegex);
+        
+        if (match) {
+            const name = match[1].trim();
+            const price = parseFloat(match[2]);
+            
+            if (name.length > 2 && name.length < 50 && !isNaN(price)) {
+                items.push({ name, price });
+            }
+        }
+    }
+    return items;
+}
+
+function displayParsedItems(items) {
+    const content = $('#pdf-import-content');
+    content.innerHTML = `
+        <p class="text-sm text-muted-foreground mb-4">Found ${items.length} potential menu items. Select the ones you want to import.</p>
+        <div class="space-y-2">
+            ${items.map((item, index) => `
+                <label for="import-item-${index}" class="flex items-center p-2 bg-secondary rounded-md cursor-pointer hover:bg-muted">
+                    <input type="checkbox" id="import-item-${index}" class="h-4 w-4 mr-3" data-name="${item.name}" data-price="${item.price}" checked>
+                    <div class="flex-grow flex justify-between">
+                        <span class="font-medium">${item.name}</span>
+                        <span class="text-muted-foreground">₹${item.price.toFixed(2)}</span>
+                    </div>
+                </label>
+            `).join('')}
+        </div>
+    `;
+}
+
+// =================================================================================
 //  SECTION: SETUP & CONFIGURATION
 // =================================================================================
 const $ = (selector) => document.querySelector(selector);
@@ -1139,7 +1233,6 @@ const ICONS = {
     customers: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`,
     staff_calls: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
     analytics: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8a5 5 0 0 1-6.4 0l-4.3 4.3a5 5 0 0 1-6.4 0"/><path d="M12.3 19.3a5 5 0 0 1-6.4 0"/><path d="M22 3a5 5 0 0 1-6.4 0"/></svg>`,
-    feedback: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>`,
     reports: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`,
     qr_codes: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect></svg>`,
     settings: `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
@@ -1153,7 +1246,6 @@ const PAGES = {
     customers: { title: "Customers", icon: ICONS.customers, render: renderCustomers },
     staff_calls: { title: "Staff Calls", icon: ICONS.staff_calls, render: renderStaffCalls },
     analytics: { title: "Analytics", icon: ICONS.analytics, render: renderAnalytics },
-    feedback: { title: "Feedback", icon: ICONS.feedback, render: renderFeedback },
     reports: { title: "Reports", icon: ICONS.reports, render: renderReports },
     qr_codes: { title: "QR Codes", icon: ICONS.qr_codes, render: renderQrCodes },
     settings: { title: "Settings", icon: ICONS.settings, render: renderSettings },
@@ -1198,6 +1290,7 @@ function render() {
 }
 
 function showToast(message, isError = false) {
+    playAlarm();
     const toast = $('#toast'), p = $('#toast-message');
     p.textContent = message;
     toast.className = `fixed bottom-5 right-5 text-primary-foreground py-2 px-4 rounded-lg shadow-lg text-sm z-[200] ${isError ? 'bg-destructive' : 'bg-primary'}`;
@@ -1430,9 +1523,8 @@ async function initializeApp() {
     supabase.channel('public-changes')
         .on('postgres_changes', { event: '*', schema: 'public' }, async (payload) => {
             console.log('Realtime Event:', payload);
-            playAlarm();
-            showToast(`Update received for ${payload.table}...`);
-
+            showToast(`Change detected in ${payload.table}`);
+            
             // Live dashboard updates
             if (state.currentPage === 'dashboard') {
                 if(payload.table === 'orders' || payload.table === 'staff_calls') {
@@ -1445,7 +1537,6 @@ async function initializeApp() {
             if (state.currentPage === 'menu' && payload.table === 'products') renderMenu($('#page-content'));
             if (state.currentPage === 'staff_calls' && payload.table === 'staff_calls') renderStaffCalls($('#page-content'));
             if (state.currentPage === 'customers' && payload.table === 'customers') renderCustomers($('#page-content'));
-            if (state.currentPage === 'feedback' && payload.table === 'feedback') renderFeedback($('#page-content'));
             if (state.currentPage === 'analytics' && (payload.table === 'orders' || payload.table === 'order_items')) renderAllCharts();
 
             // Real-time pop-up notifications for new inserts
@@ -1465,9 +1556,6 @@ async function initializeApp() {
                         <p class="text-lg text-muted-foreground mb-6">From Table #${data?.table_number || 'N/A'}</p>
                         <button onclick="hideAlert()" class="bg-primary text-primary-foreground px-6 py-3 rounded-lg font-bold">Acknowledge</button>
                     `);
-                }
-                 if (payload.table === 'feedback') {
-                    showToast('New customer feedback received!');
                 }
             }
         })
@@ -1510,5 +1598,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 </script>
 </body>
 </html>
-
 
