@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Namo Tandoori Chai Admin Panel</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☕</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -85,10 +86,11 @@
 
     <!-- Main App Container -->
     <div id="app-container" class="hidden">
-        <div class="flex h-screen bg-background">
-            <aside class="w-64 flex-shrink-0 bg-card border-r border-border flex flex-col">
-                <div class="h-20 flex items-center justify-center p-4 border-b border-border"><h1 class="text-xl font-bold">Namo Tandoori Chai</h1></div>
-                <nav id="sidebar-nav" class="flex-grow p-4 space-y-1"></nav>
+        <div class="relative flex h-screen bg-background">
+            <!-- Sidebar -->
+            <aside id="sidebar" class="w-64 flex-shrink-0 bg-card border-r border-border flex-col fixed inset-y-0 left-0 z-30 transform -translate-x-full lg:translate-x-0 lg:flex transition-transform duration-300 ease-in-out">
+                <div class="h-16 flex items-center justify-center p-4 border-b border-border flex-shrink-0"><h1 class="text-xl font-bold">Namo Tandoori Chai</h1></div>
+                <nav id="sidebar-nav" class="flex-grow p-4 space-y-1 overflow-y-auto"></nav>
                 <div class="p-4 border-t border-border space-y-2">
                     <button id="theme-toggle" class="w-full flex items-center justify-center p-2 rounded-lg bg-secondary text-secondary-foreground hover:bg-muted transition-colors">
                         <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
@@ -100,16 +102,24 @@
                     </button>
                 </div>
             </aside>
-            <main class="flex-1 flex flex-col overflow-hidden">
+            <div id="sidebar-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"></div>
+            
+            <!-- Main Content -->
+            <div class="flex-1 flex flex-col overflow-hidden lg:ml-64">
                 <header class="h-16 bg-card border-b border-border flex items-center justify-between px-6 flex-shrink-0">
-                    <h2 id="page-title" class="text-xl font-semibold text-card-foreground">Dashboard</h2>
+                    <div class="flex items-center">
+                         <button id="menu-toggle-btn" class="lg:hidden mr-4 p-2 rounded-md hover:bg-secondary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                        </button>
+                        <h2 id="page-title" class="text-xl font-semibold text-card-foreground">Dashboard</h2>
+                    </div>
                     <div class="flex items-center space-x-2">
                         <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                         <div id="user-email" class="text-sm text-muted-foreground"></div>
                     </div>
                 </header>
-                <div id="page-content" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
-            </main>
+                <main id="page-content" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6"></main>
+            </div>
         </div>
     </div>
     
@@ -150,7 +160,7 @@ async function renderDashboard(container) {
                 </div>
             </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div class="bg-card p-5 rounded-lg border border-border shadow-sm"><h4 class="text-sm font-medium text-muted-foreground">Today's Revenue</h4><p id="db-revenue" class="text-2xl font-bold">₹0.00</p></div>
             <div class="bg-card p-5 rounded-lg border border-border shadow-sm"><h4 class="text-sm font-medium text-muted-foreground">Today's Orders</h4><p id="db-orders" class="text-2xl font-bold">0</p></div>
             <div class="bg-card p-5 rounded-lg border border-border shadow-sm"><h4 class="text-sm font-medium text-muted-foreground">Pending Orders</h4><p id="db-pending-orders" class="text-2xl font-bold">0</p></div>
@@ -283,19 +293,19 @@ async function renderTakeOrder(container) {
 async function renderPosForTable(tableNumber) {
     const posContainer = $('#pos-view');
     posContainer.innerHTML = `
-        <div class="grid grid-cols-12 gap-4 h-full">
+        <div class="flex flex-col lg:flex-row gap-4 h-full">
             <!-- Categories & Menu Items -->
-            <div class="col-span-8 flex flex-col h-full bg-card border border-border rounded-lg p-4">
+            <div class="lg:w-7/12 flex flex-col h-full bg-card border border-border rounded-lg p-4">
                 <div class="flex items-center justify-between mb-4">
                     <button id="change-table-btn" class="text-sm font-medium hover:underline">&larr; Change Table</button>
                     <input type="text" id="search-menu-input" placeholder="Search menu..." class="w-1/2 p-2 bg-secondary rounded-md border border-border text-sm">
                 </div>
                 <!-- Scrollable Categories -->
                 <div id="category-tabs-container" class="mb-4 flex overflow-x-auto pb-2 space-x-2 whitespace-nowrap"></div>
-                <div id="menu-items-grid" class="flex-grow grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 overflow-y-auto"></div>
+                <div id="menu-items-grid" class="flex-grow grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 overflow-y-auto"></div>
             </div>
             <!-- Cart -->
-            <div class="col-span-4 flex flex-col h-full bg-card border border-border rounded-lg p-4">
+            <div class="lg:w-5/12 flex flex-col h-full bg-card border border-border rounded-lg p-4">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-bold">Table #${tableNumber}</h3>
                     <button id="clear-cart-btn" class="text-sm text-red-500 hover:underline">Clear Cart</button>
@@ -488,7 +498,7 @@ async function renderPosForTable(tableNumber) {
 
 async function renderMenu(container) {
     container.innerHTML = `
-        <div class="flex justify-between items-center mb-4">
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
             <h3 class="text-lg font-semibold">Menu Items</h3>
             <div class="flex space-x-2">
                 <button id="import-pdf-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Import from PDF</button>
@@ -577,13 +587,17 @@ async function renderMenu(container) {
                 <h4 class="text-md font-semibold p-4 bg-secondary border-b border-border">${category}</h4>
                 <div class="divide-y divide-border">
                 ${groupedByCategory[category].map(item => `
-                    <div class="grid grid-cols-5 gap-4 items-center p-4 text-sm">
-                        <div class="font-medium col-span-2">${item.image_url || ''} ${item.name}</div>
-                        <div class="text-muted-foreground">₹${item.price}</div>
-                        <div><span class="px-2 py-1 text-xs rounded-full ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${item.is_available ? 'Yes' : 'No'}</span></div>
-                        <div class="space-x-2">
-                            <button class="edit-item-btn text-blue-600 hover:underline" data-id="${item.id}">Edit</button>
-                            <button class="delete-item-btn text-red-600 hover:underline" data-id="${item.id}">Delete</button>
+                    <div class="p-4 text-sm">
+                        <div class="flex justify-between items-start">
+                           <div class="font-medium">${item.image_url || ''} ${item.name}</div>
+                           <div class="flex items-center gap-4">
+                                <div class="text-muted-foreground">₹${item.price}</div>
+                                <div><span class="px-2 py-1 text-xs rounded-full ${item.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${item.is_available ? 'Yes' : 'No'}</span></div>
+                                <div class="space-x-2">
+                                    <button class="edit-item-btn text-blue-600 hover:underline" data-id="${item.id}">Edit</button>
+                                    <button class="delete-item-btn text-red-600 hover:underline" data-id="${item.id}">Delete</button>
+                                </div>
+                           </div>
                         </div>
                     </div>
                 `).join('')}
@@ -710,17 +724,19 @@ async function renderMenu(container) {
 
 async function renderOrders(container) {
     container.innerHTML = `
-        <div class="bg-card p-4 rounded-lg shadow-sm border border-border">
-             <div class="grid grid-cols-7 gap-4 font-semibold text-sm text-muted-foreground px-4 py-2 border-b border-border">
-                <div>Order ID</div>
-                <div>Customer</div>
-                <div>Table</div>
-                <div>Total</div>
-                <div>Status</div>
-                <div>Source</div>
-                <div>Actions</div>
-            </div>
-            <div id="orders-table-body" class="divide-y divide-border"></div>
+        <div class="bg-card p-4 rounded-lg shadow-sm border border-border overflow-x-auto">
+             <div class="min-w-full">
+                <div class="grid grid-cols-7 gap-4 font-semibold text-sm text-muted-foreground px-4 py-2 border-b border-border" style="min-width: 800px;">
+                    <div>Order ID</div>
+                    <div>Customer</div>
+                    <div>Table</div>
+                    <div>Total</div>
+                    <div>Status</div>
+                    <div>Source</div>
+                    <div>Actions</div>
+                </div>
+                <div id="orders-table-body" class="divide-y divide-border" style="min-width: 800px;"></div>
+             </div>
         </div>
         <div id="order-detail-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"></div>
     `;
@@ -741,7 +757,7 @@ async function renderOrders(container) {
             : data.map(order => `
                 <div class="grid grid-cols-7 gap-4 items-center px-4 py-3 text-sm">
                     <div class="font-mono text-xs">${order.id.slice(0, 8)}...</div>
-                    <div>${order.customers?.name || 'N/A'}</div>
+                    <div class="truncate">${order.customers?.name || 'N/A'}</div>
                     <div>#${order.tables?.table_number || 'N/A'}</div>
                     <div class="font-semibold">₹${order.total_amount.toFixed(2)}</div>
                     <div>
@@ -766,7 +782,6 @@ async function renderOrders(container) {
         if (e.target.classList.contains('status-select')) {
             const { error } = await supabase.from('orders').update({status: e.target.value}).eq('id', e.target.dataset.id);
             if (error) showToast(`Error: ${error.message}`, true);
-            else showToast('Order status updated.');
         }
     });
 
@@ -841,7 +856,6 @@ async function renderStaffCalls(container) {
 async function resolveCall(callId) {
     const { error } = await supabase.from('staff_calls').update({ status: 'resolved' }).eq('id', callId);
     if (error) showToast(`Error: ${error.message}`, true);
-    else showToast('Staff call resolved.');
 }
 
 async function renderCustomers(container) {
@@ -1262,6 +1276,12 @@ function navigateTo(page) {
     }
     state.currentPage = page;
     render();
+    
+    // Close sidebar on navigation on mobile
+    const sidebar = $('#sidebar');
+    if(sidebar && !sidebar.classList.contains('lg:flex')) {
+        toggleSidebar(false);
+    }
 }
 
 function render() {
@@ -1289,8 +1309,7 @@ function render() {
     PAGES[state.currentPage].render(pageContent);
 }
 
-function showToast(message, isError = false, playSound = false) {
-    if (playSound) playAlarm();
+function showToast(message, isError = false) {
     const toast = $('#toast'), p = $('#toast-message');
     p.textContent = message;
     toast.className = `fixed bottom-5 right-5 text-primary-foreground py-2 px-4 rounded-lg shadow-lg text-sm z-[200] ${isError ? 'bg-destructive' : 'bg-primary'}`;
@@ -1451,17 +1470,19 @@ async function renderAllCharts() {
 function initializeAudio() {
     if (state.audioInitialized) return;
     const audio = $('#notification-sound');
-    // A small hack to get audio to play on user interaction
+    
     const promise = audio.play();
     if (promise !== undefined) {
         promise.then(_ => {
             audio.pause();
+            audio.currentTime = 0;
             state.audioInitialized = true;
             showToast('Sound notifications enabled!');
             const audioPrompt = $('#audio-prompt');
             if(audioPrompt) audioPrompt.style.display = 'none';
         }).catch(error => {
-            console.warn("Audio could not be initialized automatically.", error);
+            console.warn("Audio could not be initialized automatically. A user interaction is needed.", error);
+            // We will try again on the next user interaction.
         });
     }
 }
@@ -1469,6 +1490,8 @@ function initializeAudio() {
 function playAlarm() {
     if (!state.audioInitialized) {
         console.warn("Audio not initialized. Cannot play alarm.");
+        // Attempt to initialize now
+        initializeAudio();
         return;
     };
     const audio = $('#notification-sound');
@@ -1505,6 +1528,18 @@ function applyTheme(theme) {
     localStorage.setItem('theme', theme);
 }
 
+function toggleSidebar(show) {
+    const sidebar = $('#sidebar');
+    const overlay = $('#sidebar-overlay');
+    if (show) {
+        sidebar.classList.remove('-translate-x-full');
+        overlay.classList.remove('hidden');
+    } else {
+        sidebar.classList.add('-translate-x-full');
+        overlay.classList.add('hidden');
+    }
+}
+
 async function initializeApp() {
     $('#login-screen').classList.add('hidden');
     $('#app-container').classList.remove('hidden');
@@ -1512,8 +1547,18 @@ async function initializeApp() {
     $('#user-email').textContent = state.user.email;
     applyTheme(localStorage.getItem('theme') || 'light');
     
-    document.body.addEventListener('click', initializeAudio, { once: true });
+    // Universal click listener for audio initialization and sidebar closing
+    document.body.addEventListener('click', (e) => {
+        if (!state.audioInitialized) {
+            initializeAudio();
+        }
+        // Close sidebar if clicking on the overlay
+        if (e.target.id === 'sidebar-overlay') {
+            toggleSidebar(false);
+        }
+    }, { once: false });
 
+    $('#menu-toggle-btn').addEventListener('click', () => toggleSidebar(true));
     $('#theme-toggle').addEventListener('click', () => applyTheme(document.documentElement.classList.contains('dark') ? 'light' : 'dark'));
     $('#logout-btn').addEventListener('click', async () => { await supabase.auth.signOut(); window.location.reload(); });
     
@@ -1524,14 +1569,8 @@ async function initializeApp() {
         .on('postgres_changes', { event: '*', schema: 'public' }, async (payload) => {
             console.log('Realtime Event Received:', payload);
             
-            // Live dashboard updates
-            if (state.currentPage === 'dashboard') {
-                if(payload.table === 'orders' || payload.table === 'staff_calls') {
-                     renderDashboard($('#page-content'));
-                }
-            }
-
             // Page-specific re-renders for data consistency
+            if (state.currentPage === 'dashboard') renderDashboard($('#page-content'));
             if (state.currentPage === 'orders' && payload.table === 'orders') renderOrders($('#page-content'));
             if (state.currentPage === 'menu' && payload.table === 'products') renderMenu($('#page-content'));
             if (state.currentPage === 'staff_calls' && payload.table === 'staff_calls') renderStaffCalls($('#page-content'));
@@ -1563,17 +1602,21 @@ async function initializeApp() {
                 if (payload.table === 'orders') {
                     const orderId = payload.new.id.slice(0, 6);
                     const newStatus = payload.new.status;
-                    showToast(`Order #${orderId} status changed to ${newStatus}`, false, true);
+                    showToast(`Order #${orderId} status changed to ${newStatus}`);
+                    playAlarm();
+                }
+                 if (payload.table === 'staff_calls' && payload.new.status === 'resolved') {
+                    showToast(`A staff call has been resolved.`);
                 }
             }
         })
-        .subscribe((status) => {
+        .subscribe((status, err) => {
             if (status === 'SUBSCRIBED') {
                 console.log('✅ Realtime channel subscribed!');
-                showToast('Realtime connection established!', false, true);
+                showToast('Realtime connection established!');
             }
             if (status === 'CHANNEL_ERROR') {
-                console.error('❌ Realtime channel error.');
+                console.error('❌ Realtime channel error.', err);
                 showToast('Realtime connection error.', true);
             }
             if (status === 'TIMED_OUT') {
@@ -1588,6 +1631,7 @@ async function initializeApp() {
 document.addEventListener('DOMContentLoaded', async () => {
     $('#login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        initializeAudio(); // Try to init audio on login attempt
         const email = $('#email').value;
         const password = $('#password').value;
         const errorEl = $('#login-error');
@@ -1619,6 +1663,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 </script>
 </body>
 </html>
-
-
 
