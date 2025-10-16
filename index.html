@@ -1289,8 +1289,8 @@ function render() {
     PAGES[state.currentPage].render(pageContent);
 }
 
-function showToast(message, isError = false) {
-    playAlarm();
+function showToast(message, isError = false, playSound = false) {
+    if (playSound) playAlarm();
     const toast = $('#toast'), p = $('#toast-message');
     p.textContent = message;
     toast.className = `fixed bottom-5 right-5 text-primary-foreground py-2 px-4 rounded-lg shadow-lg text-sm z-[200] ${isError ? 'bg-destructive' : 'bg-primary'}`;
@@ -1522,8 +1522,7 @@ async function initializeApp() {
 
     supabase.channel('public-changes')
         .on('postgres_changes', { event: '*', schema: 'public' }, async (payload) => {
-            console.log('Realtime Event:', payload);
-            showToast(`Change detected in ${payload.table}`);
+            console.log('Realtime Event Received:', payload);
             
             // Live dashboard updates
             if (state.currentPage === 'dashboard') {
@@ -1558,8 +1557,30 @@ async function initializeApp() {
                     `);
                 }
             }
+
+            // Toast notification for updates
+            if (payload.eventType === 'UPDATE') {
+                if (payload.table === 'orders') {
+                    const orderId = payload.new.id.slice(0, 6);
+                    const newStatus = payload.new.status;
+                    showToast(`Order #${orderId} status changed to ${newStatus}`, false, true);
+                }
+            }
         })
-        .subscribe();
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                console.log('✅ Realtime channel subscribed!');
+                showToast('Realtime connection established!', false, true);
+            }
+            if (status === 'CHANNEL_ERROR') {
+                console.error('❌ Realtime channel error.');
+                showToast('Realtime connection error.', true);
+            }
+            if (status === 'TIMED_OUT') {
+                console.error('❌ Realtime connection timed out.');
+                showToast('Realtime connection timed out.', true);
+            }
+        });
 
     navigateTo('dashboard');
 }
@@ -1598,4 +1619,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 </script>
 </body>
 </html>
+
+
 
